@@ -2,8 +2,8 @@
 " AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
 "           Shougo Matsushita <Shougo.Matsu@gmail.com> (original VimShell)
 "           Yukihiro Nakadaira (vimproc)
-" MODIFIED: __MODIFIED__
-" VERSION:  __VERSION__, for Vim 7.0
+" MODIFIED: 2009-09-02
+" VERSION:  0.1, for Vim 7.0
 " LICENSE: {{{
 " Conque - pty interaction in Vim
 " Copyright (C) 2009 Nico Raffo 
@@ -25,12 +25,9 @@
 " Open a command in Conque.
 " This is the root function that is called from Vim to start up Conque.
 function! conque#open(command)"{{{
-    call s:log.debug('<open command>')
-    call s:log.debug('command: ' . a:command)
 
     if empty(a:command)
         echohl WarningMsg | echomsg "No command found" | echohl None
-        call s:log.warn('command not found: ' . a:command)
         return 0
     endif
 
@@ -46,7 +43,6 @@ function! conque#open(command)"{{{
     " open command
     try
         let l:proc = l:proc_lib.ptyopen(split(a:command))
-        call s:log.info('opening command: ' . a:command . ' with ptyopen to pid: ' . l:proc.pid)
     catch 
         let l:error = printf('File: "%s" is not found.', a:command)
         echohl WarningMsg | echomsg l:error | echohl None
@@ -56,7 +52,6 @@ function! conque#open(command)"{{{
     " always check for zombies before over-writing them
     if exists('b:proc')
         " more zombies than usual today
-        call s:log.warn('brains!! ' . b:proc.pid)
         call conque#force_exit()
     endif
 
@@ -72,7 +67,6 @@ function! conque#open(command)"{{{
     " read welcome message from command
     call s:read()
 
-    call s:log.debug('</open command>')
 
     startinsert!
     return 1
@@ -87,9 +81,6 @@ function! s:set_environment()"{{{
     let $COLUMNS = winwidth(0) " these get reset by terminal anyway
     let $LINES = winheight(0)
     
-    call s:log.debug('<env>')
-    call s:log.debug('winwidth: ' .winwidth(0) . ' winheight: ' . winheight(0))
-    call s:log.debug('</env>')
 endfunction"}}}
 
 " buffer settings, layout, key mappings, and auto commands
@@ -132,36 +123,29 @@ endfunction"}}}
 
 " controller to execute current line
 function! conque#run()"{{{
-    call s:log.debug('<keyboard triggered run>')
 
     if !exists('b:proc')
-        call s:log.warn('no proc found, no command to execute')
         echohl WarningMsg | echomsg "Not a shell" | echohl None
         return
     endif
     call conque#write(1)
     call s:read()
 
-    call s:log.debug('</keyboard triggered run>')
 endfunction"}}}
 
 " execute current line, but return output as string instead of printing to buffer
 function! conque#run_return()"{{{
-    call s:log.debug('<keyboard triggered run return>')
     if !exists('b:proc')
-        call s:log.warn('no proc found, no command to execute')
         echohl WarningMsg | echomsg "Not a shell" | echohl None
         return
     endif
     call conque#write(0)
     let l:output = conque#read_return_raw()
-    call s:log.debug('</keyboard triggered run return>')
     return l:output
 endfunction"}}}
 
 " write current line to pty
 function! conque#write(add_newline)"{{{
-    call s:log.debug('<write>')
 
     " pull command from the buffer
     let l:in = s:get_command()
@@ -174,14 +158,12 @@ function! conque#write(add_newline)"{{{
 
     " run the command!
     try
-        call s:log.debug('about to write command: "' . l:in . '" to pid: ' . b:proc.pid)
         if a:add_newline == 1
             call b:proc.write(l:in . "\<NL>")
         else
             call b:proc.write(l:in)
         endif
     catch
-        call s:log.warn('command fail: "' . l:in . '"')
         echohl WarningMsg | echomsg 'command fail' | echohl None
         call conque#exit()
     endtry
@@ -189,11 +171,9 @@ function! conque#write(add_newline)"{{{
     " record command history
     let l:hc = ''
     if exists("b:prompt_history['".line('.')."']")
-        call s:log.debug('command history from getline')
         let l:hc = getline('.')
         let l:hc = l:hc[len(b:prompt_history[line('.')]) : ]
     else
-        call s:log.debug('command history from l:in')
         let l:hc = l:in
     endif
     if l:hc != '' && l:hc != '...' && l:hc !~ '\t$'
@@ -211,13 +191,11 @@ function! conque#write(add_newline)"{{{
     endif
 
     normal! G$
-    call s:log.debug('</write>')
 endfunction"}}}
 
 " parse current line to remove prompt and return command.
 " also manages multi-line commands.
 function! s:get_command()"{{{
-  call s:log.debug('<get_command>')
   let l:in = getline('.')
 
   if l:in == ''
@@ -263,7 +241,6 @@ function! s:get_command()"{{{
 
     " Still nothing? We give up.
     if l:prompt_search == 0
-      call s:log.warn('invalid input')
       echohl WarningMsg | echo "Invalid input." | echohl None
       normal! G$
       startinsert!
@@ -271,22 +248,18 @@ function! s:get_command()"{{{
     endif
   endif
 
-  call s:log.debug('</get_command>')
   return l:in
 endfunction"}}}
 
 " read from pty and write to buffer
 function! s:read()"{{{
-    call s:log.debug('<read>')
 
     " read AND write to buffer
     let l:read = b:proc.read(-1, 40)
-    call s:log.debug('first read -> "' . l:read . '" < -')
     let l:output = ''
     while l:read != ''
         let l:output = l:output . l:read
         let l:read = b:proc.read(-1, 40)
-        call s:log.debug('next read -> "' . l:read . '" < -')
     endwhile
     " print to buffer
     call s:print_buffer(l:output)
@@ -295,7 +268,6 @@ function! s:read()"{{{
 
     " check for fail
     if b:proc.eof
-        call s:log.warn('eof detected')
         echohl WarningMsg | echomsg 'EOF' | echohl None
         call conque#exit()
         normal! G$
@@ -308,25 +280,20 @@ function! s:read()"{{{
     " ready to insert now
     normal! G$
     startinsert!
-    call s:log.debug('</read>')
 endfunction"}}}
 
 " read from pty and return output as string
 function! conque#read_return_raw()"{{{
-    call s:log.debug('<read return raw>')
 
     " read AND write to buffer
     let l:read = b:proc.read(-1, 500)
-    call s:log.debug('first read' . l:read)
     let l:output = l:read
     while l:read != ''
         let l:read = b:proc.read(-1, 500)
         let l:output = l:output . l:read
-        call s:log.debug('next read' . l:read)
     endwhile
 
     " ready to insert now
-    call s:log.debug('</read return raw>')
     return l:output
 endfunction"}}}
 
@@ -370,9 +337,7 @@ endfunction"}}}
 " kill process pid with SIGTERM
 " since most shells ignore SIGTERM there's a good chance this will do nothing
 function! conque#exit()"{{{
-    call s:log.debug('<exit>')
     if !exists('b:proc')
-        call s:log.warn('no proc found during exit, giving up')
         echohl WarningMsg | echomsg "huh no proc exists" | echohl None
         return
     endif
@@ -386,16 +351,13 @@ function! conque#exit()"{{{
 
     unlet b:vimproc_lib
     unlet b:proc
-    call s:log.debug('</exit>')
 endfunction"}}}
 
 " kill process pid with SIGKILL
 " undesirable, but effective
 function! conque#force_exit()"{{{
-    call s:log.debug('<force exit>')
 
     if !exists('b:proc')
-        call s:log.warn('no proc found during force exit, giving up')
         return
     endif
 
@@ -410,17 +372,14 @@ function! conque#force_exit()"{{{
     unlet b:vimproc_lib
     unlet b:proc
 
-    call s:log.debug('</force exit>')
 endfunction"}}}
 
 " kill process pid with SIGHUP
 " this gets called if the buffer is unloaded before the program has been exited
 " it should pass the signall to all children before killing the parent process
 function! conque#hang_up()"{{{
-    call s:log.debug('<hang up>')
 
     if !exists('b:proc')
-        call s:log.warn('no proc found during force exit, giving up')
         return
     endif
 
@@ -435,7 +394,6 @@ function! conque#hang_up()"{{{
     unlet b:vimproc_lib
     unlet b:proc
 
-    call s:log.debug('</hang up>')
 endfunction"}}}
 
 " load previous command
@@ -517,9 +475,7 @@ function! s:tab_complete()"{{{
     let l:candidate = conque#run_return()
     let l:extra = substitute(l:candidate, '^'.l:working_command, '', '')
 
-    call s:log.debug('tab complete candidate: "' . l:extra . '" == "' . nr2char(7) . '"')
     if l:extra == nr2char(7)
-        call s:log.debug('tab complete miss')
         call setline(line('.'), l:working_line)
         let b:tab_complete_history[line('.')] = getline(line('.'))
         startinsert!
@@ -557,40 +513,19 @@ endfunction"}}}
 " implement <C-c>
 " should send SIGINT to proc
 function! conque#sigint()"{{{
-  call s:log.debug('<sigint>')
   " send <C-c> to pty
   call b:proc.write("\<C-c>")
   call s:read()
-  call s:log.debug('</sigint>')
 endfunction"}}}
 
 " implement <Esc>
 " should send <Esc> to proc
 " Useful if Vim is launched inside of conque
 function! conque#escape()"{{{
-  call s:log.debug('<escape>')
   " send <Esc> to pty
   call b:proc.write("\<Esc>")
   call s:read()
-  call s:log.debug('</escape>')
 endfunction"}}}
 
-" Logging {{{
-if exists('g:Conque_Logging') && g:Conque_Logging == 1
-    let s:log = log#getLogger(expand('<sfile>:t'))
-else
-    let s:log = {}
-    function! s:log.debug(msg)
-    endfunction
-    function! s:log.info(msg)
-    endfunction
-    function! s:log.warn(msg)
-    endfunction
-    function! s:log.error(msg)
-    endfunction
-    function! s:log.fatal(msg)
-    endfunction
-endif
-" }}}
 
 " vim: foldmethod=marker
