@@ -1,6 +1,10 @@
-" MODIFIED: __MODIFIED__
-" VERSION:  __VERSION__, for Vim 7.0
+" FILE:     autoload/subprocess/proc_py.vim
+" AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
+" MODIFIED: 2009-10-01
+" VERSION:  0.2, for Vim 7.0
 " LICENSE:  MIT License "{{{
+" Subprocess.vim - subprocess access from Vim
+"
 " Permission is hereby granted, free of charge, to any person obtaining a copy
 " of this software and associated documentation files (the "Software"), to deal
 " in the Software without restriction, including without limitation the rights
