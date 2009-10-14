@@ -1,9 +1,7 @@
 " FILE:     syntax/conque.vim
 " AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
-"           Shougo Matsushita <Shougo.Matsu@gmail.com> (original VimShell)
-"           Yukihiro Nakadaira (vimproc)
-" MODIFIED: __MODIFIED__
-" VERSION:  __VERSION__, for Vim 7.0
+" MODIFIED: 2009-10-13
+" VERSION:  0.3, for Vim 7.0
 " LICENSE: {{{
 " Conque - pty interaction in Vim
 " Copyright (C) 2009 Nico Raffo 
@@ -55,8 +53,6 @@ syn case match
 
 " Typical Prompt
 syn match ConquePrompt '^.*\$' oneline
-syn match ConqueFold '{{{' oneline
-syn match ConqueFold '}}}' oneline
 syn match ConqueWait "^\.\.\.$" oneline
 syn region ConqueString start=+'+ end=+'+ skip=+\\'+  oneline
 syn region ConqueString start=+"+ end=+"+ skip=+\\"+  oneline
@@ -65,7 +61,6 @@ syn region ConqueString start=+`+ end=+`+ skip=+\\`+ oneline
 hi def link ConqueString String
 hi def link ConquePrompt Identifier
 hi def link ConqueWait Ignore
-hi def link ConqueFold Ignore
 
 hi def link MySQLPrompt Identifier
 hi def link MySQLTableHead Title

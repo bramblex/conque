@@ -1,7 +1,7 @@
 " FILE:     autoload/subprocess/shell_translate.vim
 " AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
-" MODIFIED: __MODIFIED__
-" VERSION:  __VERSION__, for Vim 7.0
+" MODIFIED: 2009-10-13
+" VERSION:  0.3, for Vim 7.0
 " LICENSE:  MIT License "{{{
 " Permission is hereby granted, free of charge, to any person obtaining a copy
 " of this software and associated documentation files (the "Software"), to deal
@@ -133,11 +133,9 @@ function! subprocess#shell_translate#process_current_line() "{{{
 
     let idx = 0
     while idx < l:line_len
-        "call s:log.debug("checking char " . idx)
         let c = l:current_line[idx]
         " first, escape sequences
         if c == "\<Esc>"
-            "call s:log.debug('looking for a match')
             " start looking for a match
             let l:seq = ''
             let l:seq_pos = 1
@@ -148,11 +146,9 @@ function! subprocess#shell_translate#process_current_line() "{{{
                 endif
                 let l:seq = l:seq . l:current_line[idx + l:seq_pos]
                 let l:seq = substitute(l:seq, nr2char(7), '__BELL__', 'g')
-                "call s:log.debug('evaluating sequence ' . l:seq)
                 for esc in s:escape_sequences
                     if l:seq =~ esc.code
                         " do something
-                        "call s:log.debug(l:seq)
                         let l:finished = 1
                         let idx = idx + strlen(l:seq)
                         if esc.name == 'font'
@@ -182,7 +178,6 @@ function! subprocess#shell_translate#process_current_line() "{{{
 
     let l:hi_ct = 1
     for cc in l:color_changes
-        "call s:log.debug(cc.val)
         let l:color_code = cc.val
         let l:color_code = substitute(l:color_code, '^\[', '', 1)
         let l:color_code = substitute(l:color_code, 'm$', '', 1)
@@ -208,39 +203,10 @@ function! subprocess#shell_translate#process_current_line() "{{{
         execute syntax_link
         execute syntax_highlight
 
-        "call s:log.debug(syntax_name)
-        "call s:log.debug(syntax_region)
-        "call s:log.debug(syntax_link)
-        "call s:log.debug(syntax_highlight)
-
         let l:hi_ct = l:hi_ct + 1
     endfor
 
-    " \%15l\%>2c.*\%<6c
-
-    "call s:log.debug(string(l:color_changes))
-    "call s:log.debug("start line: " . l:current_line)
-    "call s:log.debug("final line: " . l:final_line)
-    "call s:log.debug('FUNCTION TIME: '.reltimestr(reltime(start)))
 endfunction
 "}}}
-
-" Logging {{{
-if exists('g:Conque_Logging') && g:Conque_Logging == 1
-    let s:log = log#getLogger(expand('<sfile>:t'))
-else
-    let s:log = {}
-    function! s:log.debug(msg)
-    endfunction
-    function! s:log.info(msg)
-    endfunction
-    function! s:log.warn(msg)
-    endfunction
-    function! s:log.error(msg)
-    endfunction
-    function! s:log.fatal(msg)
-    endfunction
-endif
-" }}}
 
 " vim: foldmethod=marker
