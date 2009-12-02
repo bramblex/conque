@@ -1,9 +1,7 @@
 " FILE:     plugin/conque.vim
 " AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
-"           Shougo Matsushita <Shougo.Matsu@gmail.com> (original VimShell)
-"           Yukihiro Nakadaira (vimproc)
-" MODIFIED: __MODIFIED__
-" VERSION:  __VERSION__, for Vim 7.0
+" MODIFIED: 2009-12-01
+" VERSION:  0.5, for Vim 7.0
 " LICENSE: {{{
 " Conque - pty interaction in Vim
 " Copyright (C) 2009 Nico Raffo 
