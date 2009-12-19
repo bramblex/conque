@@ -2,8 +2,8 @@
 Conque - Interactive shell buffer for Vim
 
 author: nico raffo <nicoraffo@gmail.com>
-modified: __MODIFIED__
-version: __VERSION__
+modified: 2009-12-17
+version: 0.6
 info: http://code.google.com/p/conque/
 
 == REQUIREMENTS ==

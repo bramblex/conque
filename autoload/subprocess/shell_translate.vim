@@ -1,7 +1,7 @@
 " FILE:     autoload/subprocess/shell_translate.vim
 " AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
-" MODIFIED: __MODIFIED__
-" VERSION:  __VERSION__, for Vim 7.0
+" MODIFIED: 2009-12-17
+" VERSION:  0.6, for Vim 7.0
 " LICENSE:  MIT License "{{{
 " Permission is hereby granted, free of charge, to any person obtaining a copy
 " of this software and associated documentation files (the "Software"), to deal
@@ -143,7 +143,7 @@ function! subprocess#shell_translate#process_input(line, col, input, auto_wrap) 
         call subprocess#shell_translate#process_line(a:input[i], i == len(a:input) - 1 ? 0 : 1)
     endfor
 
-    call s:log.debug('moving cursor to line ' . s:line . ' and col ' . s:col)
+
     call cursor(s:line, s:col)
     startinsert!
 endfunction " }}}
@@ -155,7 +155,7 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
     let l:output = getline(s:line)
     let l:color_changes = []
 
-    call s:log.debug('starting process line at line ' . s:line . ' and col ' . s:col . ' add newline ? ' . a:add_newline)
+
 
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     " REMOVE REDUNDANT/IGNORED ESCAPE SEQUENCES. 
@@ -174,18 +174,18 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
         let l:input = substitute(l:input, '\(\e[\(\d*;\)*\d*m\)*$', '', '')
         " remove all normal color escapes leading up to the first non-normal color escape
         while l:input =~ '^[^\e]\+\e[\(39;49\|0\)\?m'
-            call s:log.debug('found initial normal')
+
             let l:input = substitute(l:input, '\e[\(39;49\|0\)\?m', '', '')
         endwhile
     endif " }}}
 
-    call s:log.debug('PROCESSING LINE ' . l:input)
-    call s:log.debug('AT COL ' . l:line_pos)
+
+
 
     " ****************************************************************************************** "
     " Loop over action matches {{{
     let l:match_num = match(l:input, s:action_match)
-    call s:log.debug('FIRST MATCH ' . l:match_num)
+
     while l:match_num != -1
         " pack characters up to the match onto output
         if l:match_num > 0 && l:line_pos == 0
@@ -196,7 +196,7 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
 
         " handle line wrapping
         if l:line_pos + l:match_num > b:COLUMNS && (s:auto_wrap == 1 || l:input[ l:match_num - 1 : ] =~ '\r.')
-            call s:log.debug('wrapping needed ' . l:output . ' len ' . len(l:output) . ' is greater than ' . b:COLUMNS)
+
             let b:auto_wrapped = 1
 
             " break output at screen width
@@ -204,8 +204,8 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
             let l:input = nr2char(13) . l:input[ l:match_num : ]
             let l:output = l:output[ : b:COLUMNS - 1 ]
             
-            call s:log.debug('new input: ' . l:input)
-            call s:log.debug('new output: ' . l:output)
+
+
 
             " finish off this line
             call setline(s:line, l:output)
@@ -223,24 +223,24 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
             return
         endif
 
-        call s:log.debug('PREADDING OUTPUT resulting in ' . l:output)
+
 
         let l:match_str = matchstr(l:input, s:action_match, l:match_num)
 
-        call s:log.debug('MATCH STR ' . l:match_str)
+
         let l:input = l:input[l:match_num + len(l:match_str) :]
-        call s:log.debug('NEW INPUT LINE ' . l:input)
+
         let l:line_pos += l:match_num
-        call s:log.debug('line pos now ' . l:line_pos)
+
 
         if l:match_str == nr2char(8)
-            call s:log.debug('backspace')
+
             let l:line_pos = l:line_pos - 1
         elseif l:match_str == nr2char(13)
-            call s:log.debug('<CR>')
+
             let l:line_pos = 0
         elseif l:match_str == nr2char(7)
-            call s:log.debug('bell')
+
             echohl WarningMsg | echomsg "BELL!" | echohl None
         else
             " last character
@@ -248,13 +248,13 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
 
             if exists('s:escape_sequences[l:key]')
 
-                call s:log.debug('escape type ' . l:key)
+
                 " action tied to this last character
                 let l:action = s:escape_sequences[l:key]
                 " numeric modifiers
                 let l:vals = split(l:match_str[2 : -2], ';')
                 let l:delta = len(l:vals) > 0 ? l:vals[0] : 1
-                call s:log.debug('escape type ' . l:action . ' with nums ' . string(l:vals))
+
 
                 " ********************************************************************************** "
                 " Escape actions " {{{
@@ -291,7 +291,7 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
                     let s:line = s:line - l:delta
                     let s:col = l:line_pos + 1
 
-                    call s:log.debug('set line to ' . s:line . ' col to ' . s:col)
+
 
                     " ship off the rest of input to next line
                     call subprocess#shell_translate#process_line(l:input, a:add_newline)
@@ -308,7 +308,7 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
                     let s:line = s:line + l:delta
                     let s:col = l:line_pos + 1
 
-                    call s:log.debug('set line to ' . s:line . ' col to ' . s:col)
+
 
                     " ship off the rest of input to next line
                     call subprocess#shell_translate#process_line(l:input, a:add_newline)
@@ -327,12 +327,12 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
 
                 elseif l:action == 'add_spaces'
 
-                    call s:log.debug('adding ' . l:delta . ' spaces')
+
                     let l:spaces = []
                     for sp in range(l:delta)
                         call add(l:spaces, ' ')
                     endfor
-                    call s:log.debug('spaces: ' . string(l:spaces))
+
 
                     if l:line_pos == 0
                         let l:output =                               join(l:spaces, '') . l:output[l:line_pos : ]
@@ -347,7 +347,7 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
         endif
 
         let l:match_num = match(l:input, s:action_match)
-        call s:log.debug('NEXT MATCH NUM ' . l:match_num)
+
     endwhile
     " }}}
 
@@ -357,19 +357,19 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
     else
         let l:output =                                  l:input . l:output[ l:line_pos + len(l:input) : ]
     endif
-    call s:log.debug('FINAL OUTPUT ' . l:output)
+
 
     " handle line wrapping
     if len(l:output) > b:COLUMNS && (s:auto_wrap == 1 || l:input[ l:match_num - 1 : ] =~ '\r.')
-        call s:log.debug('II wrapping needed ' . l:output . ' len ' . len(l:output) . ' is greater than ' . b:COLUMNS)
+
         let b:auto_wrapped = 1
 
         " break output at screen width
         let l:input = nr2char(13) . l:output[ b:COLUMNS : ]
         let l:output = l:output[ : b:COLUMNS - 1 ]
         
-        call s:log.debug('new input: ' . l:input)
-        call s:log.debug('new output: ' . l:output)
+
+
 
         " finish off this line
         call setline(s:line, l:output)
@@ -389,7 +389,7 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
     " strip trailing spaces
     let l:output = substitute(l:output, '\s\+$', '', '')
     let l:line_pos += len(l:input)
-    call s:log.debug('line pos ' . l:line_pos)
+
     if l:line_pos > len(l:output)
         let l:output = l:output . ' '
     endif
@@ -400,7 +400,7 @@ function! subprocess#shell_translate#process_line(input_line, add_newline) " {{{
     " color it
     call s:process_colors(l:color_changes)
 
-    call s:log.debug('newline? ' . a:add_newline)
+
 
     " create a new line if requested
     if a:add_newline == 1
@@ -443,44 +443,15 @@ function! s:process_colors(color_changes) " {{{
         "execute syntax_link
         silent execute syntax_highlight
 
-        "call s:log.debug(syntax_name)
-        call s:log.debug(syntax_region)
-        "call s:log.debug(syntax_link)
-        call s:log.debug(syntax_highlight)
+
+
+
+
 
         let l:hi_ct += 1
     endfor
 endfunction " }}}
 
 
-" Logging {{{
-if exists('g:Conque_Logging') && g:Conque_Logging == 1
-    let s:log = log#getLogger(expand('<sfile>:t'))
-    let s:profiles = {}
-    function! s:log.profile_start(name)
-        let s:profiles[a:name] = reltime()
-    endfunction
-    function! s:log.profile_end(name)
-        let time = reltimestr(reltime(s:profiles[a:name]))
-        call s:log.debug('PROFILE "' . a:name . '": ' . time)
-    endfunction
-else
-    let s:log = {}
-    function! s:log.debug(msg)
-    endfunction
-    function! s:log.info(msg)
-    endfunction
-    function! s:log.warn(msg)
-    endfunction
-    function! s:log.error(msg)
-    endfunction
-    function! s:log.fatal(msg)
-    endfunction
-    function! s:log.profile_start(name)
-    endfunction
-    function! s:log.profile_end(name)
-    endfunction
-endif
-" }}}
 
 " vim: foldmethod=marker
