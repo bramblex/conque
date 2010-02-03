@@ -1,3 +1,8 @@
+" Vimball Archiver by Charles E. Campbell, Jr., Ph.D.
+UseVimball
+finish
+autoload/conque_term.vim	[[[1
+1378
 " FILE:     plugin/conque_term.vim {{{
 " AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
 " MODIFIED: 2010-02-02
@@ -1376,3 +1381,322 @@ class ConqueScreen(object):
 
 EOF
 
+doc/conque_term.txt	[[[1
+156
+*ConqueTerm* Plugin to run a shell in a buffer
+
+The ConqueTerm plugin will convert a buffer into a terminal emulator, allowing
+you to run a shell or shell application in the buffer.
+
+                                                           *conque_term-usage*
+
+Type :ConqueTerm <command> to launch an application in the current buffer. E.g.
+
+  :ConqueTerm bash
+  :ConqueTerm mysql -h localhost -u joe_lunchbox Menu
+  :ConqueTerm man top
+
+Use :ConqueTermSplit or :ConqueTermVSplit to open Conque in a new horizontal
+or vertical buffer.
+
+Keys pressed in insert mode will be sent to the shell, along with output from
+the 'p' command in normal mode.
+
+Press the <Esc> key twice to send a single <Esc> to the shell. Pressing this 
+key once will leave insert mode like normal.
+
+Press <F9> in any buffer to send a visual selection to the shell.
+
+
+                                                         *conque_term-settings*
+
+Set the following in your .vimrc (default values shown)
+
+" Enable colors. Setting this to 0 will make your terminal faster.
+let g:ConqueTerm_Color = 1
+
+" Set your terminal type. I strong recommend leaving this as vt100, 
+" however more features may be enabled with xterm.
+let g:ConqueTerm_TERM = 'vt100'
+
+" Set buffer syntax. Conque has highlighting for MySQL, but not much else.
+let g:ConqueTerm_Syntax = 'conque'
+
+" Continue updating shell when it's not the current, focused buffer
+let g:ConqueTerm_ReadUnfocused = 1
+
+
+                                                     *conque_term-requirements*
+
+The following minimum requirements are needed to run Conque. Conque will not 
+run on Windows without a Cygwin-like environment.
+
+ - Vim 7.1
+ - Python 2.3
+ - Supported operating systems: *nix, Mac, or Cygwin
+
+Tested on:
+ - Vim 7.2 / Python 2.6 / Ubuntu 9.10 (Gnome & GTK)
+ - Vim 7.2 / Python 2.6 / FreeBSD 8.0 (GTK)
+ - Vim 7.1 / Python 2.6 / FreeBSD 8.0 (GTK)
+ x Vim 7.0 / Python 2.6 / FreeBSD 8.0 (GTK)
+    * feedkeys() doesn't restart updatetime
+ - Vim 7.2 / Python 2.4 / OpenSolaris 2009.06 (Gnome)
+ - Vim 7.2 / Python 2.4 / CentOS 5.3 (no GUI)
+ - Vim 7.1 / Python 2.3 / RHEL 4 (no GUI)
+ - Vim 7.2 / Python 2.5 / Cygwin (Windows Vista 64b)
+ - MacVim 7.2 / Python 2.3 / OS X 10.6.2
+
+                                                             *conque_term-bugs*
+
+The following are known limitations:
+
+ - Font/color highlighting is imperfect and slow. If you don't care about
+   color in your shell, set g:ConqueTerm_Color = 0 in your .vimrc
+ - Conque only supports the extended ASCII character set for input, not utf-8.
+ - VT100 escape sequence support is not complete.
+ - Alt/Meta key support in Vim isn't great in general, and conque is no 
+   exception. Pressing <Esc><Esc>x or <Esc><M-x> instead of <M-x> works in 
+   most cases.
+
+                                                             *conque_term-todo*
+
+ - Fix pasting from named registers
+ - Polling unfucused conque buffers (Top explodes when window resizes)
+ - Enable graphics character set
+ - Consider supporting xterm escapes
+ - Improve color logic
+ - Find a solution to UTF-8 input (See InsertCharPre in Vim todo.txt)
+ - Find an alternative to updatetime polling (See Vim todo.txt)
+ - Find a graceful solution to Meta key input
+ - Windows support 
+   (See PyConsole http://www.vim.org/scripts/script.php?script_id=1974)
+ - Always: look for performance improvements
+
+
+                                                       *conque_term-contribute*
+
+The two contributions most in need are improvements to Vim itself. I currently 
+use hacks to simulate a key press event and repeating CursorHold event. The 
+Vim todo.txt document lists proposed improvements to give users this behavior 
+without hacks. Having a key press event should allow Conque to work with multi-
+byte input. If you are a Vim developer, please consider prioritizing these two 
+items: 
+
+ - todo.txt (Autocommands, line ~3137)
+     8   Add an event like CursorHold that is triggered repeatedly, not just 
+         once after typing something.
+
+ - todo.txt (Autocommands, proposed event list, line ~3189)
+     InsertCharPre   - user typed character Insert mode, before inserting the
+     char.  Pattern is matched with text before the cursor. Set v:char to the 
+     character, can be changed. (not triggered when 'paste' is set).
+
+Bugs, suggestions and patches are all welcome.
+
+For more information visit http://conque.googlecode.com
+
+Check out the latest from svn at http://conque.googlecode.com/svn/trunk/
+
+                                                       *conque_term-changelog*
+
+ - 1.0 / 2010-02-
+    * Complete python rewrite
+    * Add support for ncurses based applications
+    * Add continuous polling, instead of using <Tab>
+    * Improve speed
+    * Improve syntax highlighting
+
+ - 0.6 / 2009-12-18
+    * Fix GVim errors with non-english locale
+    * No functional changes
+
+ - 0.5 / 2009-12-02
+    * Various performance enhancements and bugfixes. 
+    * Rewritten escape sequence processing
+
+ - 0.4 / 2009-10-30
+    * Improved history and tab completion
+    * Fix escape sequence formatting and improve highlighting
+    * Send selected text to shell from any buffer
+    * Add special handling of "vi" and "man" commands
+    * Improve error handling
+    * Add key mappings for <C-p> <C-n> <C-l> <C-j>
+    * Various bugfixes
+
+ - 0.3 / 2009-10-13
+    * Apply escape sequence coloring to output, e.g. ls --color
+    * Clean up syntax files for portability
+    * Fix several Vim 7.1 bugs
+    * Bugfixes for multiple shell buffers
+    * Add experimental shell folding option
+
+ - 0.2 / 2009-10-01
+    * Rewritten subprocess management module in python instead of c
+    * Added support for OS X, partial support for Windows
+    * Improved tab completion
+
+ - 0.1 / 2009-09-03
+    * Initial release
+
+plugin/conque_term.vim	[[[1
+80
+" FILE:     plugin/conque_term.vim {{{
+" AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
+" MODIFIED: 2010-02-02
+" VERSION:  1.0, for Vim 7.0
+" LICENSE:
+" Conque - pty interaction in Vim
+" Copyright (C) 2009-2010 Nico Raffo 
+"
+" MIT License
+" 
+" Permission is hereby granted, free of charge, to any person obtaining a copy
+" of this software and associated documentation files (the "Software"), to deal
+" in the Software without restriction, including without limitation the rights
+" to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+" copies of the Software, and to permit persons to whom the Software is
+" furnished to do so, subject to the following conditions:
+" 
+" The above copyright notice and this permission notice shall be included in
+" all copies or substantial portions of the Software.
+" 
+" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+" IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+" FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+" AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+" LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+" OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+" THE SOFTWARE.
+" }}}
+
+" See docs/conque_term.txt for help or type :help conque_term
+
+if exists('g:ConqueTerm_Loaded') || v:version < 700
+    finish
+endif
+
+" **********************************************************************************************************
+" **** CONFIG **********************************************************************************************
+" **********************************************************************************************************
+
+" Enable color {{{
+if !exists('g:ConqueTerm_Color')
+    let g:ConqueTerm_Color = 1
+endif " }}}
+
+" TERM environment setting {{{
+if !exists('g:ConqueTerm_TERM')
+    let g:ConqueTerm_TERM =  'vt100'
+endif " }}}
+
+" Syntax for your buffer {{{
+if !exists('g:ConqueTerm_Syntax')
+    let g:ConqueTerm_Syntax = 'conque_term'
+endif " }}}
+
+" Read when unfocused {{{
+if !exists('g:ConqueTerm_ReadUnfocused')
+    let g:ConqueTerm_ReadUnfocused = 1
+endif " }}}
+
+" Use this regular expression to highlight prompt {{{
+if !exists('g:ConqueTerm_PromptRegex')
+    let g:ConqueTerm_PromptRegex = '^\w\+@[0-9A-Za-z_.-]\+:[0-9A-Za-z_./\~,:-]\+\$'
+endif " }}}
+
+" **********************************************************************************************************
+" **** Startup *********************************************************************************************
+" **********************************************************************************************************
+
+" Startup {{{
+setlocal encoding=utf-8
+
+let g:ConqueTerm_Loaded = 1
+let g:ConqueTerm_Idx = 1
+
+command! -nargs=+ -complete=shellcmd ConqueTerm call conque_term#open(<q-args>)
+command! -nargs=+ -complete=shellcmd ConqueTermSplit call conque_term#open(<q-args>, ['split'])
+command! -nargs=+ -complete=shellcmd ConqueTermVSplit call conque_term#open(<q-args>, ['vsplit'])
+
+" }}}
+
+syntax/conque_term.vim	[[[1
+77
+
+" *******************************************************************************************************************
+" MySQL *************************************************************************************************************
+" *******************************************************************************************************************
+
+syn match MySQLTableHead "^ *|.*| *$" nextgroup=MySQLTableDivide contains=MySQLTableBar oneline skipwhite skipnl
+syn match MySQLTableBody "^ *|.*| *$" nextgroup=MySQLTableBody,MySQLTableEnd contains=MySQLTableBar,MySQLNull,MySQLBool,MySQLNumber,MySQLStorageClass oneline skipwhite skipnl
+syn match MySQLTableEnd "^ *+[+=-]\++ *$" oneline 
+syn match MySQLTableDivide "^ *+[+=-]\++ *$" nextgroup=MySQLTableBody oneline skipwhite skipnl
+syn match MySQLTableStart "^ *+[+=-]\++ *$" nextgroup=MySQLTableHead oneline skipwhite skipnl
+syn match MySQLTableBar "|" contained
+syn match MySQLNull " NULL " contained
+syn match MySQLBool " YES " contained
+syn match MySQLBool " NO " contained
+syn match MySQLStorageClass " PRI " contained
+syn match MySQLStorageClass " MUL " contained
+syn match MySQLStorageClass " UNI " contained
+syn match MySQLStorageClass " CURRENT_TIMESTAMP " contained
+syn match MySQLStorageClass " auto_increment " contained
+syn match MySQLNumber " \d\+ " contained
+syn match MySQLQueryStat "^\d\+ rows\? in set.*" oneline
+syn match MySQLPromptLine "^.\?mysql> .*$" contains=MySQLKeyword,MySQLPrompt,MySQLString oneline
+syn match MySQLPromptLine "^    -> .*$" contains=MySQLKeyword,MySQLPrompt,MySQLString oneline
+syn match MySQLPrompt "^.\?mysql>" contained oneline
+syn match MySQLPrompt "^    ->" contained oneline
+syn case ignore
+syn keyword MySQLKeyword select count max sum avg date show table tables status like as from left right outer inner join contained 
+syn keyword MySQLKeyword where group by having limit offset order desc asc show contained
+syn case match
+syn region MySQLString start=+'+ end=+'+ skip=+\\'+ contained oneline
+syn region MySQLString start=+"+ end=+"+ skip=+\\"+ contained oneline
+syn region MySQLString start=+`+ end=+`+ skip=+\\`+ contained oneline
+
+hi def link MySQLPrompt Identifier
+hi def link MySQLTableHead Title
+hi def link MySQLTableBody Normal
+hi def link MySQLBool Boolean
+hi def link MySQLStorageClass StorageClass
+hi def link MySQLNumber Number
+hi def link MySQLKeyword Keyword
+hi def link MySQLString String
+
+" terms which have no reasonable default highlight group to link to
+hi MySQLTableHead term=bold cterm=bold gui=bold
+if &background == 'dark'
+    hi MySQLTableEnd term=NONE cterm=NONE gui=NONE ctermfg=238 guifg=#444444
+    hi MySQLTableDivide term=NONE cterm=NONE gui=NONE ctermfg=238 guifg=#444444
+    hi MySQLTableStart term=NONE cterm=NONE gui=NONE ctermfg=238 guifg=#444444
+    hi MySQLTableBar term=NONE cterm=NONE gui=NONE ctermfg=238 guifg=#444444
+    hi MySQLNull term=NONE cterm=NONE gui=NONE ctermfg=238 guifg=#444444
+    hi MySQLQueryStat term=NONE cterm=NONE gui=NONE ctermfg=238 guifg=#444444
+elseif &background == 'light'
+    hi MySQLTableEnd term=NONE cterm=NONE gui=NONE ctermfg=247 guifg=#9e9e9e
+    hi MySQLTableDivide term=NONE cterm=NONE gui=NONE ctermfg=247 guifg=#9e9e9e
+    hi MySQLTableStart term=NONE cterm=NONE gui=NONE ctermfg=247 guifg=#9e9e9e
+    hi MySQLTableBar term=NONE cterm=NONE gui=NONE ctermfg=247 guifg=#9e9e9e
+    hi MySQLNull term=NONE cterm=NONE gui=NONE ctermfg=247 guifg=#9e9e9e
+    hi MySQLQueryStat term=NONE cterm=NONE gui=NONE ctermfg=247 guifg=#9e9e9e
+endif
+
+
+" *******************************************************************************************************************
+" Bash **************************************************************************************************************
+" *******************************************************************************************************************
+
+" Typical Prompt
+silent execute "syn match ConquePromptLine '" . g:ConqueTerm_PromptRegex . ".*$' contains=ConquePrompt,ConqueString oneline"
+silent execute "syn match ConquePrompt '" . g:ConqueTerm_PromptRegex . "' contained oneline"
+hi def link ConquePrompt Identifier
+
+" Strings
+syn region ConqueString start=+'+ end=+'+ skip=+\\'+ contained oneline
+syn region ConqueString start=+"+ end=+"+ skip=+\\"+ contained oneline
+syn region ConqueString start=+`+ end=+`+ skip=+\\`+ contained oneline
+hi def link ConqueString String
+
+" vim: foldmethod=marker
