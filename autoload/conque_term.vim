@@ -39,8 +39,8 @@ function! conque_term#open(...) "{{{
     let hooks   = get(a:000, 1, [])
 
     " bare minimum validation
-    if has('python') != 1
-        echohl WarningMsg | echomsg "Conque requires the Python interface to be installed" | echohl None
+    if has('python3') != 1
+        echohl WarningMsg | echomsg "Conque requires the python3 interface to be installed" | echohl None
         return 0
     endif
     if empty(command)
@@ -64,8 +64,8 @@ function! conque_term#open(...) "{{{
     " open command
     try
         let l:config = '{"color":' . string(g:ConqueTerm_Color) . ',"TERM":"' . g:ConqueTerm_TERM . '"}'
-        execute 'python ' . b:ConqueTerm_Var . ' = Conque()'
-        execute "python " . b:ConqueTerm_Var . ".open('" . conque_term#python_escape(command) . "', " . l:config . ")"
+        execute 'py3 ' . b:ConqueTerm_Var . ' = Conque()'
+        execute "py3 " . b:ConqueTerm_Var . ".open('" . conque_term#python_escape(command) . "', " . l:config . ")"
     catch 
         echohl WarningMsg | echomsg "Unable to open command: " . command | echohl None
         return 0
@@ -138,18 +138,18 @@ function! conque_term#set_mappings(action) "{{{
         execute 'augroup ' . b:ConqueTerm_Var
 
         " handle unexpected closing of shell, passes HUP to parent and all child processes
-        execute 'autocmd ' . b:ConqueTerm_Var . ' BufUnload <buffer> python ' . b:ConqueTerm_Var . '.proc.signal(1)'
+        execute 'autocmd ' . b:ConqueTerm_Var . ' BufUnload <buffer> py3 ' . b:ConqueTerm_Var . '.proc.signal(1)'
 
         " check for resized/scrolled buffer when entering buffer
-        execute 'autocmd ' . b:ConqueTerm_Var . ' BufEnter <buffer> python ' . b:ConqueTerm_Var . '.update_window_size()'
-        execute 'autocmd ' . b:ConqueTerm_Var . ' VimResized python ' . b:ConqueTerm_Var . '.update_window_size()'
+        execute 'autocmd ' . b:ConqueTerm_Var . ' BufEnter <buffer> py3 ' . b:ConqueTerm_Var . '.update_window_size()'
+        execute 'autocmd ' . b:ConqueTerm_Var . ' VimResized py3 ' . b:ConqueTerm_Var . '.update_window_size()'
 
         " set/reset updatetime on entering/exiting buffer
         execute 'autocmd ' . b:ConqueTerm_Var . ' BufEnter <buffer> call conque_term#on_focus()'
         execute 'autocmd ' . b:ConqueTerm_Var . ' BufLeave <buffer> call conque_term#on_blur()'
 
         " reposition cursor when going into insert mode
-        execute 'autocmd ' . b:ConqueTerm_Var . ' InsertEnter <buffer> python ' . b:ConqueTerm_Var . '.cursor_set = False'
+        execute 'autocmd ' . b:ConqueTerm_Var . ' InsertEnter <buffer> py3 ' . b:ConqueTerm_Var . '.cursor_set = False'
 
         " read more output when this isn't the current buffer
         if g:ConqueTerm_ReadUnfocused == 1
@@ -157,7 +157,7 @@ function! conque_term#set_mappings(action) "{{{
         endif
 
         " poll for more output
-        sil execute 'autocmd ' . b:ConqueTerm_Var . ' CursorHoldI <buffer> python ' .  b:ConqueTerm_Var . '.auto_read()'
+        sil execute 'autocmd ' . b:ConqueTerm_Var . ' CursorHoldI <buffer> py3 ' .  b:ConqueTerm_Var . '.auto_read()'
     endif
 
     " map ASCII 1-31
@@ -167,13 +167,13 @@ function! conque_term#set_mappings(action) "{{{
             continue
         endif
         if l:action == 'start'
-            sil exe 'i' . map_modifier . 'map <silent> <buffer> <C-' . nr2char(64 + c) . '> <C-o>:python ' . b:ConqueTerm_Var . '.write(chr(' . c . '))<CR>'
+            sil exe 'i' . map_modifier . 'map <silent> <buffer> <C-' . nr2char(64 + c) . '> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(chr(' . c . '))<CR>'
         else
             sil exe 'i' . map_modifier . 'map <silent> <buffer> <C-' . nr2char(64 + c) . '>'
         endif
     endfor
     if l:action == 'start'
-        sil exe 'n' . map_modifier . 'map <silent> <buffer> <C-c> <C-o>:python ' . b:ConqueTerm_Var . '.write(chr(3))<CR>'
+        sil exe 'n' . map_modifier . 'map <silent> <buffer> <C-c> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(chr(3))<CR>'
     else
         sil exe 'n' . map_modifier . 'map <silent> <buffer> <C-c>'
     endif
@@ -182,7 +182,7 @@ function! conque_term#set_mappings(action) "{{{
     if !exists('g:ConqueTerm_EscKey') || g:ConqueTerm_EscKey == '<Esc>'
         " use <Esc><Esc> to send <Esc> to terminal
         if l:action == 'start'
-            sil exe 'i' . map_modifier . 'map <silent> <buffer> <Esc><Esc> <C-o>:python ' . b:ConqueTerm_Var . '.write(chr(27))<CR>'
+            sil exe 'i' . map_modifier . 'map <silent> <buffer> <Esc><Esc> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(chr(27))<CR>'
         else
             sil exe 'i' . map_modifier . 'map <silent> <buffer> <Esc><Esc>'
         endif
@@ -190,7 +190,7 @@ function! conque_term#set_mappings(action) "{{{
         " use <Esc> to send <Esc> to terminal
         if l:action == 'start'
             sil exe 'i' . map_modifier . 'map <silent> <buffer> ' . g:ConqueTerm_EscKey . ' <Esc>'
-            sil exe 'i' . map_modifier . 'map <silent> <buffer> <Esc> <C-o>:python ' . b:ConqueTerm_Var . '.write(chr(27))<CR>'
+            sil exe 'i' . map_modifier . 'map <silent> <buffer> <Esc> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(chr(27))<CR>'
         else
             sil exe 'i' . map_modifier . 'map <silent> <buffer> ' . g:ConqueTerm_EscKey
             sil exe 'i' . map_modifier . 'map <silent> <buffer> <Esc>'
@@ -211,14 +211,14 @@ function! conque_term#set_mappings(action) "{{{
         " <Bar>
         if i == 124
             if l:action == 'start'
-                sil exe "i" . map_modifier . "map <silent> <buffer> <Bar> <C-o>:python " . b:ConqueTerm_Var . ".write(chr(124))<CR>"
+                sil exe "i" . map_modifier . "map <silent> <buffer> <Bar> <C-o>:py3 " . b:ConqueTerm_Var . ".write(chr(124))<CR>"
             else
                 sil exe "i" . map_modifier . "map <silent> <buffer> <Bar>"
             endif
             continue
         endif
         if l:action == 'start'
-            sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i) . " <C-o>:python " . b:ConqueTerm_Var . ".write(chr(" . i . "))<CR>"
+            sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i) . " <C-o>:py3 " . b:ConqueTerm_Var . ".write(chr(" . i . "))<CR>"
         else
             sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i)
         endif
@@ -227,7 +227,7 @@ function! conque_term#set_mappings(action) "{{{
     " map ASCII 128-255
     for i in range(128, 255)
         if l:action == 'start'
-            sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i) . " <C-o>:python " . b:ConqueTerm_Var . ".write('" . nr2char(i) . "')<CR>"
+            sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i) . " <C-o>:py3 " . b:ConqueTerm_Var . ".write('" . nr2char(i) . "')<CR>"
         else
             sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i)
         endif
@@ -235,12 +235,12 @@ function! conque_term#set_mappings(action) "{{{
 
     " Special cases
     if l:action == 'start'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <BS> <C-o>:python ' . b:ConqueTerm_Var . '.write(u"\u0008")<CR>'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Space> <C-o>:python ' . b:ConqueTerm_Var . '.write(" ")<CR>'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Up> <C-o>:python ' . b:ConqueTerm_Var . '.write(u"\u001b[A")<CR>'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Down> <C-o>:python ' . b:ConqueTerm_Var . '.write(u"\u001b[B")<CR>'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Right> <C-o>:python ' . b:ConqueTerm_Var . '.write(u"\u001b[C")<CR>'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Left> <C-o>:python ' . b:ConqueTerm_Var . '.write(u"\u001b[D")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <BS> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(u"\u0008")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Space> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(" ")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Up> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(u"\u001b[A")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Down> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(u"\u001b[B")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Right> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(u"\u001b[C")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Left> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(u"\u001b[D")<CR>'
     else
         sil exe 'i' . map_modifier . 'map <silent> <buffer> <BS>'
         sil exe 'i' . map_modifier . 'map <silent> <buffer> <Space>'
@@ -259,10 +259,10 @@ function! conque_term#set_mappings(action) "{{{
 
     " remap paste keys
     if l:action == 'start'
-        sil exe 'n' . map_modifier . 'map <silent> <buffer> p :python ' . b:ConqueTerm_Var . '.write(vim.eval("@@"))<CR>a'
-        sil exe 'n' . map_modifier . 'map <silent> <buffer> P :python ' . b:ConqueTerm_Var . '.write(vim.eval("@@"))<CR>a'
-        sil exe 'n' . map_modifier . 'map <silent> <buffer> ]p :python ' . b:ConqueTerm_Var . '.write(vim.eval("@@"))<CR>a'
-        sil exe 'n' . map_modifier . 'map <silent> <buffer> [p :python ' . b:ConqueTerm_Var . '.write(vim.eval("@@"))<CR>a'
+        sil exe 'n' . map_modifier . 'map <silent> <buffer> p :py3 ' . b:ConqueTerm_Var . '.write(vim.eval("@@"))<CR>a'
+        sil exe 'n' . map_modifier . 'map <silent> <buffer> P :py3 ' . b:ConqueTerm_Var . '.write(vim.eval("@@"))<CR>a'
+        sil exe 'n' . map_modifier . 'map <silent> <buffer> ]p :py3 ' . b:ConqueTerm_Var . '.write(vim.eval("@@"))<CR>a'
+        sil exe 'n' . map_modifier . 'map <silent> <buffer> [p :py3 ' . b:ConqueTerm_Var . '.write(vim.eval("@@"))<CR>a'
     else
         sil exe 'n' . map_modifier . 'map <silent> <buffer> p'
         sil exe 'n' . map_modifier . 'map <silent> <buffer> P'
@@ -271,7 +271,7 @@ function! conque_term#set_mappings(action) "{{{
     endif
     if has('gui_running')
         if l:action == 'start'
-            sil exe 'i' . map_modifier . 'map <buffer> <S-Insert> <Esc>:<C-u>python ' . b:ConqueTerm_Var . ".write(vim.eval('@+'))<CR>a"
+            sil exe 'i' . map_modifier . 'map <buffer> <S-Insert> <Esc>:<C-u>py3 ' . b:ConqueTerm_Var . ".write(vim.eval('@+'))<CR>a"
         else
             sil exe 'i' . map_modifier . 'map <buffer> <S-Insert>'
         endif
@@ -326,7 +326,7 @@ function! conque_term#send_selected(type) "{{{
 
     " execute yanked text
     sil exe ":sb " . g:ConqueTerm_BufName
-    sil exe 'python ' . g:ConqueTerm_Var . '.paste_selection()'
+    sil exe 'py3 ' . g:ConqueTerm_Var . '.paste_selection()'
 
     " reset original values
     let @@ = reg_save
@@ -346,7 +346,7 @@ function! conque_term#read_all() "{{{
 
     try
         for i in range(1, g:ConqueTerm_Idx - 1)
-            execute 'python ConqueTerm_' . string(i) . '.read(1)'
+            execute 'py3 ConqueTerm_' . string(i) . '.read(1)'
         endfor
     catch
         " probably a deleted buffer
@@ -401,7 +401,7 @@ endfunction " }}}
 " **********************************************************************************************************
 
 let conque_py_dir = substitute(findfile('autoload/conque_term.vim', &rtp), 'conque_term.vim', '', '')
-exec "pyfile " . conque_py_dir . "conque.py"
-exec "pyfile " . conque_py_dir . "conque_subprocess.py"
-exec "pyfile " . conque_py_dir . "conque_screen.py"
+exec "py3file " . conque_py_dir . "conque.py"
+exec "py3file " . conque_py_dir . "conque_subprocess.py"
+exec "py3file " . conque_py_dir . "conque_screen.py"
 
