@@ -277,7 +277,7 @@ class Conque:
                 logging.debug(str(s) + '--------------------------------------------------------------')
                 logging.debug('chgs ' + str(self.color_changes))
                 logging.debug('at line ' + str(self.l) + ' column ' + str(self.c))
-                logging.debug('current: ' + self.screen[self.l])
+                #logging.debug('current: ' + str(self.screen[self.l]))
 
                 # Check for control character match {{{
                 if CONQUE_SEQ_REGEX_CTL.match(s[0]):

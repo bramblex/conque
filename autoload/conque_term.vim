@@ -235,12 +235,12 @@ function! conque_term#set_mappings(action) "{{{
 
     " Special cases
     if l:action == 'start'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <BS> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(u"\u0008")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <BS> <C-o>:py3 ' . b:ConqueTerm_Var . '.write("\u0008")<CR>'
         sil exe 'i' . map_modifier . 'map <silent> <buffer> <Space> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(" ")<CR>'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Up> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(u"\u001b[A")<CR>'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Down> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(u"\u001b[B")<CR>'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Right> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(u"\u001b[C")<CR>'
-        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Left> <C-o>:py3 ' . b:ConqueTerm_Var . '.write(u"\u001b[D")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Up> <C-o>:py3 ' . b:ConqueTerm_Var . '.write("\u001b[A")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Down> <C-o>:py3 ' . b:ConqueTerm_Var . '.write("\u001b[B")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Right> <C-o>:py3 ' . b:ConqueTerm_Var . '.write("\u001b[C")<CR>'
+        sil exe 'i' . map_modifier . 'map <silent> <buffer> <Left> <C-o>:py3 ' . b:ConqueTerm_Var . '.write("\u001b[D")<CR>'
     else
         sil exe 'i' . map_modifier . 'map <silent> <buffer> <BS>'
         sil exe 'i' . map_modifier . 'map <silent> <buffer> <Space>'
