@@ -1,7 +1,7 @@
 " FILE:     plugin/conque_term.vim {{{
 " AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
-" MODIFIED: __MODIFIED__
-" VERSION:  __VERSION__, for Vim 7.0
+" MODIFIED: 2010-10-10
+" VERSION:  1.2, for Vim 7.0
 " LICENSE:
 " Conque - pty interaction in Vim
 " Copyright (C) 2009-2010 Nico Raffo 
