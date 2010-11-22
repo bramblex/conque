@@ -59,6 +59,9 @@ class ConqueScreen(object):
     screen_width = 80
     screen_height = 80
 
+    # char encoding for vim buffer
+    screen_encoding = 'utf-8'
+
     # }}}
 
     def __init__(self): # {{{
@@ -67,6 +70,8 @@ class ConqueScreen(object):
         self.screen_top = 1
         self.screen_width = vim.current.window.width
         self.screen_height = vim.current.window.height
+
+        self.screen_encoding = vim.eval('&fileencoding')
     # }}}
 
     ###############################################################################################
@@ -91,7 +96,7 @@ class ConqueScreen(object):
         real_line = self.get_real_idx(key)
 
         if CONQUE_PYTHON_VERSION == 2:
-            val = value.encode('utf-8')
+            val = value.encode(self.screen_encoding)
         else:
             # XXX / Vim's python3 interface doesn't accept bytes object
             val = str(value)

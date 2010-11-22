@@ -136,6 +136,7 @@ class ConqueSubprocess:
                 if lines == '':
                     break
         except:
+            logging.info(traceback.format_exc())
             pass
 
         return output
@@ -145,10 +146,11 @@ class ConqueSubprocess:
     def write(self, input): # {{{
         try:
             if CONQUE_PYTHON_VERSION == 2:
-                os.write(self.fd, input)
+                os.write(self.fd, input.encode('utf-8', 'ignore'))
             else:
                 os.write(self.fd, bytes(input, 'utf-8'))
         except:
+            logging.info(traceback.format_exc())
             logging.info('write fail')
             pass
         # }}}

@@ -133,6 +133,7 @@ class Conque:
         # }}}
 
     # write to pty
+    # input is always a unicode string
     def write(self, input, set_cursor=True, read=True): # {{{
 
         # check if window size has changed
@@ -146,6 +147,37 @@ class Conque:
         if read:
             self.read(1, set_cursor)
 
+        # }}}
+
+    # write a character to pty
+    # input is ord() value
+    def write_ord(self, input, set_cursor=True, read=True): # {{{
+
+        if CONQUE_PYTHON_VERSION == 2:
+            self.write(unichr(input), set_cursor, read)
+        else:
+            self.write(chr(input), set_cursor, read)
+        
+        # }}}
+
+    # write a vim expression to pty
+    # input is extracted from expression string
+    def write_expr(self, expr, set_cursor=True, read=True): # {{{
+
+        if CONQUE_PYTHON_VERSION == 2:
+            try:
+                val = vim.eval(expr)
+                self.write(unicode(val, vim.eval('&encoding'), 'ignore'))
+            except:
+                logging.info(traceback.format_exc())
+                pass
+        else:
+            try:
+                val = bytes(vim.eval(expr))
+                self.write(val.decode(vim.eval('&encoding'), 'ignore'))
+            except:
+                logging.info(traceback.format_exc())
+                pass
         # }}}
 
     # convert latin-1 input into utf-8
@@ -849,16 +881,6 @@ class Conque:
                 vim.command('set titlestring=' + re.escape(val))
             except:
                 pass
-
-    def paste(self):
-        input = vim.eval('@@')
-        input = input.replace("\n", "\r")
-        self.read(50)
-
-    def paste_selection(self):
-        input = vim.eval('@@')
-        input = input.replace("\n", "\r")
-        self.write(input)
 
     def update_window_size(self, force=False):
         # resize if needed
