@@ -173,8 +173,8 @@ class Conque:
                 pass
         else:
             try:
-                val = bytes(vim.eval(expr))
-                self.write(val.decode(vim.eval('&encoding'), 'ignore'))
+                # XXX - Depending on Vim to deal with encoding, sadly
+                self.write(vim.eval(expr))
             except:
                 logging.info(traceback.format_exc())
                 pass
