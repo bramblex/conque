@@ -1110,7 +1110,7 @@ endfunction "}}}
 function! s:term_obj.write(text) dict " {{{
 
     " if we're not in terminal buffer, pass flag to not position the cursor
-    sil exe s:py . ' ' . self.var . '.write(vim.eval("a:text"), False, False)'
+    sil exe s:py . ' ' . self.var . '.write_expr("a:text", False, False)'
 
 endfunction " }}}
 
