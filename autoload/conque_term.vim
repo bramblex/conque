@@ -507,6 +507,15 @@ function! conque_term#set_buffer_settings(command, pre_hooks) "{{{
 
 endfunction " }}}
 
+function! conque_term#key_press() "{{{
+    if v:char == "'"
+        sil exe s:py . ' ' . b:ConqueTerm_Var . ".write(\"'\")"
+    else
+        sil exe s:py . ' ' . b:ConqueTerm_Var . ".write('" . v:char . "')"
+    endif
+    sil let v:char = ''
+endfunction " }}}
+
 " set key mappings and auto commands
 function! conque_term#set_mappings(action) "{{{
 
@@ -606,33 +615,31 @@ function! conque_term#set_mappings(action) "{{{
     endif
     " }}}
 
-    " map ASCII 33-127 {{{
-    for i in range(33, 127)
-        " <Bar>
-        if i == 124
-            if l:action == 'start'
-                sil exe "i" . map_modifier . "map <silent> <buffer> <Bar> <C-o>:" . s:py . ' ' . b:ConqueTerm_Var . ".write(chr(124))<CR>"
-            else
-                sil exe "i" . map_modifier . "map <silent> <buffer> <Bar>"
+    " map 33 and beyond {{{
+    if exists('##InsertCharPre')
+        if l:action == 'start'
+            autocmd InsertCharPre <buffer> call conque_term#key_press()
+        else
+            autocmd! InsertCharPre <buffer>
+        endif
+    else
+        for i in range(33, 127)
+            " <Bar>
+            if i == 124
+                if l:action == 'start'
+                    sil exe "i" . map_modifier . "map <silent> <buffer> <Bar> <C-o>:" . s:py . ' ' . b:ConqueTerm_Var . ".write(chr(124))<CR>"
+                else
+                    sil exe "i" . map_modifier . "map <silent> <buffer> <Bar>"
+                endif
+                continue
             endif
-            continue
-        endif
-        if l:action == 'start'
-            sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i) . " <C-o>:" . s:py . ' ' . b:ConqueTerm_Var . ".write(chr(" . i . "))<CR>"
-        else
-            sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i)
-        endif
-    endfor
-    " }}}
-
-    " map Latin-1 128-255 {{{
-    for i in range(128, 255)
-        if l:action == 'start'
-            sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i) . " <C-o>:" . s:py . ' ' . b:ConqueTerm_Var . ".write_latin1(chr(" . i . "))<CR>"
-        else
-            sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i)
-        endif
-    endfor
+            if l:action == 'start'
+                sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i) . " <C-o>:" . s:py . ' ' . b:ConqueTerm_Var . ".write(chr(" . i . "))<CR>"
+            else
+                sil exe "i" . map_modifier . "map <silent> <buffer> " . nr2char(i)
+            endif
+        endfor
+    endif
     " }}}
 
     " Special keys {{{
