@@ -54,7 +54,7 @@ class ConqueSoleSharedMemory():
     fixed_length = False
 
     # fill memory with this character when clearing and fixed_length is true
-    fill_char = ' '
+    FILL_CHAR = None
 
     # serialize and unserialize data automatically
     serialize = False
@@ -72,7 +72,7 @@ class ConqueSoleSharedMemory():
     shm = None
 
     # character encoding, dammit
-    encoding = 'ascii'
+    encoding = 'utf-8'
 
     # pickle terminator
     TERMINATOR = None
@@ -82,7 +82,7 @@ class ConqueSoleSharedMemory():
     # ****************************************************************************
     # constructor I guess
 
-    def __init__(self, mem_size, mem_type, mem_key, fixed_length=False, fill_char=' ', serialize=False, encoding='ascii'): # {{{
+    def __init__(self, mem_size, mem_type, mem_key, fixed_length=False, fill_char=' ', serialize=False, encoding='utf-8'): # {{{
 
         self.mem_size = mem_size
         self.mem_type = mem_type
@@ -92,6 +92,11 @@ class ConqueSoleSharedMemory():
         self.serialize = serialize
         self.encoding = encoding
         self.TERMINATOR = str(chr(0)).encode(self.encoding)
+
+        if CONQUE_PYTHON_VERSION == 3:
+            self.FILL_CHAR = fill_char
+        else:
+            self.FILL_CHAR = unicode(fill_char)
 
     # }}}
 
@@ -107,7 +112,10 @@ class ConqueSoleSharedMemory():
 
         name = "conque_%s_%s" % (self.mem_type, self.mem_key)
 
-        self.shm = mmap.mmap(0, self.mem_size, name, mmap_access)
+        if self.fixed_length:
+            self.shm = mmap.mmap(0, self.mem_size * 4, name, mmap_access)
+        else:
+            self.shm = mmap.mmap(0, self.mem_size, name, mmap_access)
 
         if not self.shm:
             return False
@@ -121,14 +129,15 @@ class ConqueSoleSharedMemory():
 
     def read(self, chars=1, start=0): # {{{
 
-        # invalid reads
-        if self.fixed_length and (chars == 0 or start + chars > self.mem_size):
-            return ''
-
         # go to start position
-        self.shm.seek(start)
+        if self.fixed_length:
+            self.shm.seek(start * 4)
+        else:
+            self.shm.seek(start)
 
-        if not self.fixed_length:
+        if self.fixed_length:
+            chars = chars * 4
+        else:
             chars = self.shm.find(self.TERMINATOR)
 
         if chars == 0:
@@ -167,14 +176,13 @@ class ConqueSoleSharedMemory():
         else:
             tb = text.encode(self.encoding, 'replace')
 
-        self.shm.seek(start)
-
         # write to memory
         if self.fixed_length:
-            self.shm.write(tb)
+            self.shm.seek(start * 4)
         else:
-            self.shm.write(tb + self.TERMINATOR)
+            self.shm.seek(start)
 
+        self.shm.write(tb + self.TERMINATOR)
         # }}}
 
     # ****************************************************************************
@@ -185,7 +193,7 @@ class ConqueSoleSharedMemory():
         self.shm.seek(start)
 
         if self.fixed_length:
-            self.shm.write(str(self.fill_char * self.mem_size).encode(self.encoding))
+            self.shm.write(str(self.fill_char * self.mem_size * 4).encode(self.encoding))
         else:
             self.shm.write(self.TERMINATOR)
 

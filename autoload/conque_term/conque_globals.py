@@ -35,6 +35,15 @@ import re
 import logging # DEBUG
 import traceback # DEBUG
 
+try:
+    import vim
+    # Vim's character encoding
+    CONQUE_VIM_ENCODING = vim.eval('&encoding')
+
+except:
+    CONQUE_VIM_ENCODING = 'utf-8'
+
+
 # enable logging # DEBUG
 CONQUE_LOG_FILENAME = None # DEBUG
 if os.path.exists('/home/nraffo/.vim/'): # DEBUG
@@ -73,7 +82,7 @@ CONQUE_SOLE_MEM_REDRAW = 1000
 CONQUE_PYTHON_VERSION = sys.version_info[0]
 
 
-def u(str_val, str_encoding='latin-1', errors='strict'):
+def u(str_val, str_encoding='utf-8', errors='strict'):
     """foolhardy attempt to make unicode string syntax compatible with both python 2 and 3"""
 
     if not str_val:
@@ -84,6 +93,15 @@ def u(str_val, str_encoding='latin-1', errors='strict'):
 
     else:
         return unicode(str_val, str_encoding, errors)
+
+def uchr(str):
+    """foolhardy attempt to make unicode string syntax compatible with both python 2 and 3"""
+
+    if CONQUE_PYTHON_VERSION == 3:
+        return chr(str)
+
+    else:
+        return unichr(str)
 
 # Escape sequence settings  {{{
 

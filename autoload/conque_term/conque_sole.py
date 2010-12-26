@@ -40,6 +40,7 @@ class ConqueSole(Conque):
     color_conceals = {}
 
     buffer = None
+    encoding = None
 
     # counters for periodic rendering
     buffer_redraw_ct = 0
@@ -64,6 +65,7 @@ class ConqueSole(Conque):
         self.proc.open(command, {'TERM': options['TERM'], 'CONQUE': '1', 'LINES': self.lines, 'COLUMNS': self.columns}, python_exe, communicator_py)
 
         self.buffer = vim.current.buffer
+        self.screen_encoding = vim.eval('&fileencoding')
 
         # }}}
 
@@ -197,11 +199,18 @@ class ConqueSole(Conque):
             text = self.add_conceal_color(text, attributes, stats, line_nr)
             #logging.debug('added color to ' + str(text))
 
+        # deal with character encoding
+        if CONQUE_PYTHON_VERSION == 2:
+            val = text.encode(self.screen_encoding)
+        else:
+            # XXX / Vim's python3 interface doesn't accept bytes object
+            val = str(text)
+
         # update vim buffer
         if len(self.buffer) <= line_nr:
-            self.buffer.append(text)
+            self.buffer.append(val)
         else:
-            self.buffer[line_nr] = text
+            self.buffer[line_nr] = val
 
         if not self.color_mode == 'conceal':
             self.do_color(attributes=attributes, stats=stats)

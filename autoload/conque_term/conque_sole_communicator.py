@@ -135,7 +135,7 @@ if __name__ == '__main__':
                 if not proc.is_alive():
                     logging.info('subprocess appears to be deadish, closing')
                     proc.close()
-                    exit()
+                    break
 
                 # check for change in buffer focus
                 cmd = shm_command.read()

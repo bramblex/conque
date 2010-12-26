@@ -389,12 +389,16 @@ class ConqueSoleSubprocess():
         if self.mem_redraw_ct == CONQUE_SOLE_MEM_REDRAW:
             self.mem_redraw_ct = 0
             logging.info('mem redraw')
-            self.shm_output.write(''.join(self.data))
-            self.shm_attributes.write(''.join(self.attributes))
+            for i in range(0, len(self.data)):
+                self.shm_output.write(text=self.data[i], start=self.buffer_width * i)
+                self.shm_attributes.write(text=self.attributes[i], start=self.buffer_width * i)
         else:
             logging.debug('no mem redraw')
-            self.shm_output.write(text=''.join(self.data[read_start:read_end]), start=read_start * self.buffer_width)
-            self.shm_attributes.write(text=''.join(self.attributes[read_start:read_end]), start=read_start * self.buffer_width)
+            for i in range(read_start, read_end):
+                self.shm_output.write(text=self.data[i], start=self.buffer_width * i)
+                self.shm_attributes.write(text=self.attributes[i], start=self.buffer_width * i)
+                #self.shm_output.write(text=''.join(self.data[read_start:read_end]), start=read_start * self.buffer_width)
+                #self.shm_attributes.write(text=''.join(self.attributes[read_start:read_end]), start=read_start * self.buffer_width)
 
         # write cursor position to shared memory
         stats = {'top_offset': buf_info.srWindow.Top, 'default_attribute': buf_info.wAttributes, 'cursor_x': curs_col, 'cursor_y': curs_line, 'is_alive': 1}
@@ -539,18 +543,19 @@ class ConqueSoleSubprocess():
             ke.wRepeatCount = ctypes.c_short(1)
 
             cnum = ord(text[i])
+            logging.debug('writing char: ' + str(cnum))
             ke.wVirtualKeyCode = ctypes.windll.user32.VkKeyScanW(cnum)
             ke.wVirtualScanCode = ctypes.c_short(ctypes.windll.user32.MapVirtualKeyW(int(cnum), 0))
 
             if cnum > 31:
-                ke.uChar.UnicodeChar = u(chr(cnum))
+                ke.uChar.UnicodeChar = uchr(cnum)
             elif cnum == 3:
                 ctypes.windll.kernel32.GenerateConsoleCtrlEvent(0, self.pid)
-                ke.uChar.UnicodeChar = u(chr(cnum))
+                ke.uChar.UnicodeChar = uchr(cnum)
                 ke.wVirtualKeyCode = ctypes.windll.user32.VkKeyScanW(cnum + 96)
                 ke.dwControlKeyState = LEFT_CTRL_PRESSED
             else:
-                ke.uChar.UnicodeChar = u(chr(cnum))
+                ke.uChar.UnicodeChar = uchr(cnum)
                 if cnum in CONQUE_WINDOWS_VK_INV:
                     ke.wVirtualKeyCode = cnum
                 else:
@@ -585,7 +590,7 @@ class ConqueSoleSubprocess():
 
         # create keyboard input
         ke = KEY_EVENT_RECORD()
-        ke.uChar.UnicodeChar = u(chr(0))
+        ke.uChar.UnicodeChar = uchr(0)
         ke.wVirtualKeyCode = ctypes.c_short(int(vk_code))
         ke.wVirtualScanCode = ctypes.c_short(ctypes.windll.user32.MapVirtualKeyW(int(vk_code), 0))
         ke.bKeyDown = ctypes.c_byte(1)

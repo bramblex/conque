@@ -199,9 +199,7 @@ class ConqueSoleWrapper():
 
     def write(self, text): # {{{
 
-        self.bucket += u(text, 'ascii', 'replace')
-
-        logging.debug('bucket is ' + self.bucket)
+        self.bucket += text
 
         istr = self.shm_input.read()
 
@@ -217,7 +215,7 @@ class ConqueSoleWrapper():
 
     def write_vk(self, vk_code): # {{{
 
-        seq = "\x1b[" + str(vk_code) + "VK"
+        seq = u("\x1b[") + u(str(vk_code)) + u("VK")
         self.write(seq)
 
         # }}}

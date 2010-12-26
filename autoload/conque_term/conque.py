@@ -167,7 +167,7 @@ class Conque:
         if CONQUE_PYTHON_VERSION == 2:
             try:
                 val = vim.eval(expr)
-                self.write(unicode(val, vim.eval('&encoding'), 'ignore'))
+                self.write(unicode(val, CONQUE_VIM_ENCODING, 'ignore'))
             except:
                 logging.info(traceback.format_exc())
                 pass
@@ -322,7 +322,7 @@ class Conque:
             if CONQUE_PYTHON_VERSION == 3:
                 return output
             else:
-                return output.encode(vim.eval('&encoding'), 'replace')
+                return output.encode(CONQUE_VIM_ENCODING, 'replace')
         # }}}
 
     # for polling
