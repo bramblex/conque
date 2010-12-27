@@ -267,6 +267,18 @@ you set this option to 1.
 >
     let g:ConqueTerm_SendFunctionKeys = 0
 <
+3.15 Terminal color method, Windows ONLY                    *ConqueTerm_Color*
+
+Vim syntax highlighting by coordinate (e.g. the 3-7th characters on the 42nd
+line) can be very slow. If you set this variable to 'conceal', you can use
+the new conceal feature to render terminal colors. Requires Vim 7.3 and only 
+works on the Windows version of Conque. This will make colors render faster, 
+however it will also add hidden characters to the screen, which may be 
+annoying if you're copying and pasting terminal output out of the Conque 
+buffer. Set this to an empty string '' to disable concealed highlighting.
+>
+    let g:ConqueTerm_ColorMode = 'conceal'
+<
 
 ==============================================================================
 

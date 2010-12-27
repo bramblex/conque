@@ -36,6 +36,7 @@ class ConqueSole(Conque):
     window_bottom = None
 
     color_cache = {}
+    attribute_cache = {}
     color_mode = None
     color_conceals = {}
 
@@ -56,6 +57,9 @@ class ConqueSole(Conque):
         self.lines = vim.current.window.height
         self.window_top = 0
         self.window_bottom = vim.current.window.height - 1
+
+        # color mode
+        self.color_mode = vim.eval('g:ConqueTerm_ColorMode')
 
         # init color
         self.enable_colors = options['color']
@@ -212,9 +216,11 @@ class ConqueSole(Conque):
         else:
             self.buffer[line_nr] = val
 
-        if not self.color_mode == 'conceal':
-            self.do_color(attributes=attributes, stats=stats)
-
+        if self.enable_colors and not self.color_mode == 'conceal':
+            relevant = attributes[0:len(text)]
+            if line_nr not in self.attribute_cache or self.attribute_cache[line_nr] != relevant:
+                self.do_color(attributes=relevant, stats=stats)
+                self.attribute_cache[line_nr] = relevant
         # }}}
 
     #########################################################################
@@ -231,59 +237,35 @@ class ConqueSole(Conque):
             return text
 
         new_text = ''
-
-        # if text attribute is different, call add_color()
-        attr = None
-        start = 0
         self.color_conceals[line_nr] = []
-        ends = []
-        for i in range(0, len(attributes)):
-            c = ord(attributes[i])
-            #logging.debug('attr char ' + str(c))
-            if c != attr:
-                if attr and attr != stats['default_attribute']:
 
-                    color = self.translate_color(attr)
+        attribute_chunks = CONQUE_WIN32_ATTR_REGEX.findall(attributes)
+        offset = 0
+        for attr in attribute_chunks:
+            attr_num = ord(attr[1])
+            ends = []
+            if attr_num != stats['default_attribute']:
 
-                    new_text += chr(27) + 'sf' + color['fg_code'] + ';'
-                    ends.append(chr(27) + 'ef' + color['fg_code'] + ';')
+                color = self.translate_color(attr_num)
+
+                new_text += chr(27) + 'sf' + color['fg_code'] + ';'
+                ends.append(chr(27) + 'ef' + color['fg_code'] + ';')
+                self.color_conceals[line_nr].append(offset)
+
+                if attr_num > 15:
+                    new_text += chr(27) + 'sf' + color['bg_code'] + ';'
+                    ends.append(chr(27) + 'ef' + color['bg_code'] + ';')
                     self.color_conceals[line_nr].append(start)
 
-                    if c > 15:
-                        new_text += chr(27) + 'sf' + color['bg_code'] + ';'
-                        ends.append(chr(27) + 'ef' + color['bg_code'] + ';')
-                        self.color_conceals[line_nr].append(start)
+            new_text += text[offset:offset + len(attr[0])]
 
-                new_text += text[start:i]
+            # close color regions
+            ends.reverse()
+            for i in range(0, len(ends)):
+                new_text += ends[i]
 
-                # close color regions
-                ends.reverse()
-                for j in range(0, len(ends)):
-                    new_text += ends[j]
-                    self.color_conceals[line_nr].append(i)
-                ends = []
+            offset += len(attr[0])
 
-                start = i
-                attr = c
-
-
-        if attr and attr != stats['default_attribute']:
-
-            color = self.translate_color(attr)
-
-            new_text += chr(27) + 'sf' + color['fg_code'] + ';'
-            ends.append(chr(27) + 'ef' + color['fg_code'] + ';')
-
-            if c > 15:
-                new_text += chr(27) + 'sf' + color['bg_code'] + ';'
-                ends.append(chr(27) + 'ef' + color['bg_code'] + ';')
-
-        new_text += text[start:]
-
-        # close color regions
-        ends.reverse()
-        for i in range(0, len(ends)):
-            new_text += ends[i]
 
         return new_text
 
@@ -293,33 +275,20 @@ class ConqueSole(Conque):
 
     def do_color(self, start=0, end=0, attributes='', stats=None): # {{{
 
-        # stop here if coloration is disabled
-        if not self.enable_colors:
-            return
-
         # if no colors for this line, clear everything out
         if len(attributes) == 0 or attributes == u(chr(stats['default_attribute'])) * len(attributes):
             self.color_changes = {}
             self.apply_color(1, len(attributes), self.l)
             return
 
-        # if text attribute is different, call add_color()
-        attr = None
-        start = 0
-        for i in range(0, len(attributes)):
-            c = ord(attributes[i])
-            #logging.debug('attr char ' + str(c))
-            if c != attr:
-                if attr and attr != stats['default_attribute']:
-                    self.color_changes = self.translate_color(attr)
-                    self.apply_color(start + 1, i + 1, self.l)
-                start = i
-                attr = c
-
-        if attr and attr != stats['default_attribute']:
-            self.color_changes = self.translate_color(attr)
-            self.apply_color(start + 1, len(attributes), self.l)
-
+        attribute_chunks = CONQUE_WIN32_ATTR_REGEX.findall(attributes)
+        offset = 0
+        for attr in attribute_chunks:
+            attr_num = ord(attr[1])
+            if attr_num != stats['default_attribute']:
+                self.color_changes = self.translate_color(attr_num)
+                self.apply_color(offset + 1, offset + len(attr[0]) + 1, self.l)
+            offset += len(attr[0])
 
         # }}}
 

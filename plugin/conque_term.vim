@@ -73,6 +73,13 @@ if !exists('g:ConqueTerm_Color')
     let g:ConqueTerm_Color = 1
 endif " }}}
 
+" Color mode. Windows ONLY {{{
+" Set this variable to 'conceal' to use Vim's conceal mode for terminal colors.
+" This makes colors render much faster, but has some odd baggage.
+if !exists('g:ConqueTerm_ColorMode')
+    let g:ConqueTerm_ColorMode = 'conceal'
+endif " }}}
+
 " TERM environment setting {{{
 if !exists('g:ConqueTerm_TERM')
     let g:ConqueTerm_TERM =  'vt100'

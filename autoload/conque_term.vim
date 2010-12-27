@@ -422,7 +422,9 @@ function! conque_term#open(...) "{{{
             execute s:py . ' ' . g:ConqueTerm_Var . ' = ConqueSole()'
             execute s:py . ' ' . g:ConqueTerm_Var . ".open('" . conque_term#python_escape(command) . "', " . l:config . ", '" . py_exe . "', '" . py_vim . "')"
 
-            "call conque_term#init_conceal_color()
+            if g:ConqueTerm_ColorMode == 'conceal'
+                call conque_term#init_conceal_color()
+            endif
         endif
     catch
         echohl WarningMsg | echomsg "An error occurred: " . command | echohl None

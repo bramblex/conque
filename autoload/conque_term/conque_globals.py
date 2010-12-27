@@ -289,6 +289,9 @@ CONQUE_SEQ_REGEX_CHAR = re.compile(u("^\x1b\("), re.UNICODE)
 # match table output
 CONQUE_TABLE_OUTPUT = re.compile("^\s*\|\s.*\s\|\s*$|^\s*\+[=+-]+\+\s*$")
 
+# windows attribute string splitting
+CONQUE_WIN32_ATTR_REGEX = re.compile("((.)\\2*)", re.DOTALL)
+
 # }}}
 
 # Windows subprocess config {{{
