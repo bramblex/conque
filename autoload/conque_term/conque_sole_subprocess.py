@@ -221,6 +221,11 @@ class ConqueSoleSubprocess():
             # set window size
             self.set_window_size(self.window_width, self.window_height)
 
+            # set utf-8 code page
+            if ctypes.windll.kernel32.IsValidCodePage(ctypes.c_uint(65001)):
+                ctypes.windll.kernel32.SetConsoleCP(ctypes.c_uint(65001))
+                ctypes.windll.kernel32.SetConsoleOutputCP(ctypes.c_uint(65001))
+
             # init shared memory
             self.init_shared_memory(mem_key)
 
@@ -373,9 +378,6 @@ class ConqueSoleSubprocess():
 
             t = self.tc.value
             a = self.ac.value
-            #logging.debug(str(chars_read))
-            #logging.debug("line " + str(i) + " is: " + str(self.tc.value))
-            #logging.debug("attributes " + str(i) + " is: " + str(a))
 
             # add data
             if i >= len(self.data):
@@ -384,6 +386,14 @@ class ConqueSoleSubprocess():
             else:
                 self.data[i] = t
                 self.attributes[i] = a
+
+            #logging.debug(str(chars_read))
+            #logging.info('---')
+            #logging.info(t)
+            #for i in range(0, len(t)):
+            #    logging.info("char " + t[i])
+            #    logging.info("char " + str(ord(t[i])))
+            #logging.debug("attributes " + str(i) + " is: " + str(a))
 
         # write new output to shared memory
         if self.mem_redraw_ct == CONQUE_SOLE_MEM_REDRAW:
@@ -497,10 +507,10 @@ class ConqueSoleSubprocess():
         text = self.shm_input.read()
 
         # nothing to do here
-        if text == '':
+        if text == u(''):
             return
 
-        logging.debug('writing: ' + text)
+        logging.info(u('writing: ') + text)
 
         # clear input queue
         self.shm_input.clear()
@@ -537,6 +547,7 @@ class ConqueSoleSubprocess():
         list_input = li()
 
         for i in range(0, len(text)):
+
             # create keyboard input
             ke = KEY_EVENT_RECORD()
             ke.bKeyDown = ctypes.c_byte(1)

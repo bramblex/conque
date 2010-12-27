@@ -95,7 +95,7 @@ class ConqueSoleWrapper():
         logging.info('python command: ' + cmd_line)
 
         # console window attributes
-        flags = NORMAL_PRIORITY_CLASS | DETACHED_PROCESS
+        flags = NORMAL_PRIORITY_CLASS | DETACHED_PROCESS | CREATE_UNICODE_ENVIRONMENT
         si = STARTUPINFO()
         pi = PROCESS_INFORMATION()
 
