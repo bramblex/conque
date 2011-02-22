@@ -275,7 +275,7 @@ if g:ConqueTerm_StartMessages
     endif
 
     " save our final decision
-    let g:ConqueTerm_ShowStartMsg = msg_show
+    let g:ConqueTerm_StartMessages = msg_show
 endif
 " }}}
 
@@ -473,7 +473,7 @@ function! conque_term#open(...) "{{{
         let l:config["TERM"] = g:ConqueTerm_TERM
         let l:config["CODE_PAGE"] = g:ConqueTerm_CodePage
         let l:config["color"] = g:ConqueTerm_Color
-        let l:config["offset"] = g:ConqueTerm_ShowStartMsg * 10
+        let l:config["offset"] = g:ConqueTerm_StartMessages * 10
 
         if s:platform == 'nix'
             execute s:py . ' ' . g:ConqueTerm_Var . ' = Conque()'
