@@ -47,6 +47,9 @@ class ConqueSole(Conque):
     buffer_redraw_ct = 0
     screen_redraw_ct = 0
 
+    # line offset, shifts output down
+    offset = 0
+
     # *********************************************************************************************
     # start program and initialize this instance
 
@@ -61,12 +64,15 @@ class ConqueSole(Conque):
         # color mode
         self.color_mode = vim.eval('g:ConqueTerm_ColorMode')
 
+        # line offset
+        self.offset = options['offset']
+
         # init color
         self.enable_colors = options['color']
 
         # open command
         self.proc = ConqueSoleWrapper()
-        self.proc.open(command, {'TERM': options['TERM'], 'CONQUE': '1', 'LINES': self.lines, 'COLUMNS': self.columns}, python_exe, communicator_py)
+        self.proc.open(command, self.lines, self.columns, python_exe, communicator_py, options)
 
         self.buffer = vim.current.buffer
         self.screen_encoding = vim.eval('&fileencoding')
@@ -192,7 +198,10 @@ class ConqueSole(Conque):
         #logging.debug('attributes ' + str(line_nr) + ": " + attributes)
         #logging.debug('default attr ' + str(stats['default_attribute']))
 
-        self.l = line_nr + 1
+        # handle line offset
+        line_nr += self.offset
+
+        self.l = line_nr + 1 
 
         # remove trailing whitespace
         text = text.rstrip()
@@ -241,6 +250,7 @@ class ConqueSole(Conque):
 
         attribute_chunks = CONQUE_WIN32_ATTR_REGEX.findall(attributes)
         offset = 0
+        ends = []
         for attr in attribute_chunks:
             attr_num = ord(attr[1])
             ends = []
@@ -253,15 +263,16 @@ class ConqueSole(Conque):
                 self.color_conceals[line_nr].append(offset)
 
                 if attr_num > 15:
-                    new_text += chr(27) + 'sf' + color['bg_code'] + ';'
-                    ends.append(chr(27) + 'ef' + color['bg_code'] + ';')
-                    self.color_conceals[line_nr].append(start)
+                    new_text += chr(27) + 'sb' + color['bg_code'] + ';'
+                    ends.append(chr(27) + 'eb' + color['bg_code'] + ';')
+                    self.color_conceals[line_nr].append(offset)
 
             new_text += text[offset:offset + len(attr[0])]
 
             # close color regions
             ends.reverse()
             for i in range(0, len(ends)):
+                self.color_conceals[line_nr].append(len(new_text))
                 new_text += ends[i]
 
             offset += len(attr[0])
@@ -374,6 +385,10 @@ class ConqueSole(Conque):
     # resize if needed
 
     def set_cursor(self, line, column): # {{{
+        logging.debug('setting cursor at line ' + str(line) + ' column ' + str(column))
+
+        # handle offset
+        line += self.offset
 
         # shift cursor position to handle concealed text
         if self.enable_colors and self.color_mode == 'conceal':
@@ -383,6 +398,8 @@ class ConqueSole(Conque):
                         column += 7
                     else:
                         break
+
+        logging.debug('column is now ' + str(column))
 
         # figure out line
         real_line = line

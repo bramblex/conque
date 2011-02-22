@@ -82,16 +82,16 @@ class ConqueSoleWrapper():
     #########################################################################
     # run communicator process which will in turn run cmd
 
-    def open(self, cmd, options={}, python_exe='python.exe', communicator_py='conque_sole_communicator.py'): # {{{
+    def open(self, cmd, lines, columns, python_exe='python.exe', communicator_py='conque_sole_communicator.py', options={}): # {{{
 
-        self.lines = options['LINES']
-        self.columns = options['COLUMNS']
+        self.lines = lines
+        self.columns = columns
 
         # create a shm key
         self.shm_key = 'mk' + str(time.time())
 
         # python command
-        cmd_line = '%s "%s" %s %d %d %s' % (python_exe, communicator_py, self.shm_key, int(self.columns), int(self.lines), cmd)
+        cmd_line = '%s "%s" %s %d %d %d %s' % (python_exe, communicator_py, self.shm_key, int(self.columns), int(self.lines), int(options['CODE_PAGE']), cmd)
         logging.info('python command: ' + cmd_line)
 
         # console window attributes

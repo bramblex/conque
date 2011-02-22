@@ -69,6 +69,9 @@ endif " }}}
 
 " Enable color. {{{
 " If your apps use a lot of color it will slow down the shell.
+" 0 - no terminal colors. You still will see Vim syntax highlighting.
+" 1 - limited terminal colors (recommended). Past terminal color history cleared regularly.
+" 2 - all terminal colors. Terminal color history never cleared.
 if !exists('g:ConqueTerm_Color')
     let g:ConqueTerm_Color = 1
 endif " }}}
@@ -77,7 +80,7 @@ endif " }}}
 " Set this variable to 'conceal' to use Vim's conceal mode for terminal colors.
 " This makes colors render much faster, but has some odd baggage.
 if !exists('g:ConqueTerm_ColorMode')
-    let g:ConqueTerm_ColorMode = 'conceal'
+    let g:ConqueTerm_ColorMode = ''
 endif " }}}
 
 " TERM environment setting {{{
@@ -128,6 +131,22 @@ endif " }}}
 if !exists('g:ConqueTerm_SessionSupport')
     let g:ConqueTerm_SessionSupport = 0
 endif " }}}
+
+" hide Conque startup messages {{{
+" messages should only appear the first 3 times you start Vim with a new version of Conque
+" and include important Conque feature and option descriptions
+" TODO - disabled and unused for now
+if !exists('g:ConqueTerm_StartMessages')
+    let g:ConqueTerm_StartMessages = 0
+endif " }}}
+
+" Windows character code page {{{
+" Leave at 0 to use current environment code page.
+" Use 65001 for utf-8, although many console apps do not support it.
+if !exists('g:ConqueTerm_CodePage')
+    let g:ConqueTerm_CodePage = 0
+endif " }}}
+
 
 " }}}
 

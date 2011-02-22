@@ -222,9 +222,11 @@ class ConqueSoleSubprocess():
             self.set_window_size(self.window_width, self.window_height)
 
             # set utf-8 code page
-            if ctypes.windll.kernel32.IsValidCodePage(ctypes.c_uint(65001)):
-                ctypes.windll.kernel32.SetConsoleCP(ctypes.c_uint(65001))
-                ctypes.windll.kernel32.SetConsoleOutputCP(ctypes.c_uint(65001))
+            if 'CODE_PAGE' in options and options['CODE_PAGE'] > 0:
+                if ctypes.windll.kernel32.IsValidCodePage(ctypes.c_uint(options['CODE_PAGE'])):
+                    logging.info('setting code page to ' + str(options['CODE_PAGE']))
+                    ctypes.windll.kernel32.SetConsoleCP(ctypes.c_uint(options['CODE_PAGE']))
+                    ctypes.windll.kernel32.SetConsoleOutputCP(ctypes.c_uint(options['CODE_PAGE']))
 
             # init shared memory
             self.init_shared_memory(mem_key)
@@ -356,7 +358,7 @@ class ConqueSoleSubprocess():
         # set update range
         if curs_line != self.cursor_line or self.top != buf_info.srWindow.Top or self.screen_redraw_ct == CONQUE_SOLE_SCREEN_REDRAW:
             self.screen_redraw_ct = 0
-            logging.info('screen redraw')
+            logging.debug('screen redraw')
             read_start = self.top
             read_end = buf_info.srWindow.Bottom + 1
         else:
@@ -398,7 +400,7 @@ class ConqueSoleSubprocess():
         # write new output to shared memory
         if self.mem_redraw_ct == CONQUE_SOLE_MEM_REDRAW:
             self.mem_redraw_ct = 0
-            logging.info('mem redraw')
+            logging.debug('mem redraw')
             for i in range(0, len(self.data)):
                 self.shm_output.write(text=self.data[i], start=self.buffer_width * i)
                 self.shm_attributes.write(text=self.attributes[i], start=self.buffer_width * i)

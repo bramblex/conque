@@ -239,6 +239,47 @@ endfunction " }}}
 " }}}
 
 " **********************************************************************************************************
+" **** STARTUP MESSAGES ************************************************************************************
+" **********************************************************************************************************
+
+" {{{
+if g:ConqueTerm_StartMessages
+    let msg_file = s:scriptdirpy . 'version.vim'
+    let msg_show = 1
+    let msg_ct = 1
+
+    " we can write to conque_term directory
+    if filewritable(s:scriptdirpy) == 2
+
+        if filewritable(msg_file)
+
+            " read current message file
+            try
+                silent execute "source " . msg_file
+                if exists('g:ConqueTerm_MsgCt') && exists('g:ConqueTerm_MsgVer')
+                    if g:ConqueTerm_MsgVer == g:ConqueTerm_Version && g:ConqueTerm_MsgCt > 2
+                        let msg_show = 0
+                    else
+                        let msg_ct = g:ConqueTerm_MsgCt + 1
+                    endif
+                endif
+            catch
+            endtry
+        endif
+
+        " update message file
+        if msg_show
+            let file_contents = ['let g:ConqueTerm_MsgCt = ' . msg_ct, 'let g:ConqueTerm_MsgVer = ' . g:ConqueTerm_Version]
+            call writefile(file_contents, msg_file)
+        endif
+    endif
+
+    " save our final decision
+    let g:ConqueTerm_ShowStartMsg = msg_show
+endif
+" }}}
+
+" **********************************************************************************************************
 " **** WINDOWS VK CODES ************************************************************************************
 " **********************************************************************************************************
 
@@ -428,10 +469,15 @@ function! conque_term#open(...) "{{{
 
     " open command
     try
-        let l:config = '{"color":' . string(g:ConqueTerm_Color) . ',"TERM":"' . g:ConqueTerm_TERM . '"}'
+        let l:config = {}
+        let l:config["TERM"] = g:ConqueTerm_TERM
+        let l:config["CODE_PAGE"] = g:ConqueTerm_CodePage
+        let l:config["color"] = g:ConqueTerm_Color
+        let l:config["offset"] = g:ConqueTerm_ShowStartMsg * 10
+
         if s:platform == 'nix'
             execute s:py . ' ' . g:ConqueTerm_Var . ' = Conque()'
-            execute s:py . ' ' . g:ConqueTerm_Var . ".open('" . conque_term#python_escape(command) . "', " . l:config . ")"
+            execute s:py . ' ' . g:ConqueTerm_Var . ".open('" . conque_term#python_escape(command) . "', " . string(l:config) . ")"
         else
             " find python.exe and communicator
             let py_exe = conque_term#python_escape(conque_term#find_python_exe())
@@ -440,7 +486,7 @@ function! conque_term#open(...) "{{{
                 return 0
             endif
             execute s:py . ' ' . g:ConqueTerm_Var . ' = ConqueSole()'
-            execute s:py . ' ' . g:ConqueTerm_Var . ".open('" . conque_term#python_escape(command) . "', " . l:config . ", '" . py_exe . "', '" . py_vim . "')"
+            execute s:py . ' ' . g:ConqueTerm_Var . ".open('" . conque_term#python_escape(command) . "', " . string(l:config) . ", '" . py_exe . "', '" . py_vim . "')"
 
             if g:ConqueTerm_ColorMode == 'conceal'
                 call conque_term#init_conceal_color()
@@ -619,6 +665,11 @@ function! conque_term#set_mappings(action) "{{{
         inoremap <silent> <buffer> <C-w>k <Esc><C-w>k
         inoremap <silent> <buffer> <C-w>h <Esc><C-w>h
         inoremap <silent> <buffer> <C-w>l <Esc><C-w>l
+        inoremap <silent> <buffer> <C-w><Up> <Esc><C-w><Up>
+        inoremap <silent> <buffer> <C-w><Down> <Esc><C-w><Down>
+        inoremap <silent> <buffer> <C-w><Right> <Esc><C-w><Right>
+        inoremap <silent> <buffer> <C-w><Left> <Esc><C-w><Left>
+        inoremap <silent> <buffer> <C-w><C-w> <Esc><C-w><C-w>
         inoremap <silent> <buffer> <C-w>w <Esc><C-w>w
     endif
     " }}}
@@ -884,8 +935,17 @@ function! conque_term#on_focus(...) " {{{
     " set poll interval to 50ms
     set updatetime=50
 
+    " resume subprocess fast polling
     if startup == 0 && exists('b:ConqueTerm_Var')
         sil exe s:py . ' ' . g:ConqueTerm_Var . '.resume()'
+    endif
+
+    " disable MatchParen, it slows down rendering   
+    if exists('loaded_matchparen') || exists(':NoMatchParen')
+      try
+          NoMatchParen
+      catch
+      endtry
     endif
 
     " if configured, go into insert mode
@@ -903,6 +963,7 @@ function! conque_term#on_blur() " {{{
         NeoComplCacheUnlock
     endif
 
+    " turn off subprocess fast polling
     if exists('b:ConqueTerm_Var')
         sil exe s:py . ' ' . b:ConqueTerm_Var . '.idle()'
     endif
@@ -917,6 +978,15 @@ function! conque_term#on_blur() " {{{
     else
         set updatetime=2000
     endif
+
+    " re-enable MatchParen
+    if exists('loaded_matchparen') || exists(':DoMatchParen')
+      try
+          DoMatchParen
+      catch
+      endtry
+    endif
+
 endfunction " }}}
 
 " bell event (^G)
@@ -990,24 +1060,24 @@ function! conque_term#init_conceal_color() " {{{
     syn region ConqueCCFfff matchgroup=ConqueConceal start="\esffff;" end="\eeffff;" concealends contains=ConqueCCBG
 
     " background colors, low intensity
-    syn region ConqueCCB000 matchgroup=ConqueConceal start="\esb000;" end="\eeb000;" concealends
-    syn region ConqueCCB00c matchgroup=ConqueConceal start="\esb00c;" end="\eeb00c;" concealends
-    syn region ConqueCCB0c0 matchgroup=ConqueConceal start="\esb0c0;" end="\eeb0c0;" concealends
-    syn region ConqueCCB0cc matchgroup=ConqueConceal start="\esb0cc;" end="\eeb0cc;" concealends
-    syn region ConqueCCBc00 matchgroup=ConqueConceal start="\esbc00;" end="\eebc00;" concealends
-    syn region ConqueCCBc0c matchgroup=ConqueConceal start="\esbc0c;" end="\eebc0c;" concealends
-    syn region ConqueCCBcc0 matchgroup=ConqueConceal start="\esbcc0;" end="\eebcc0;" concealends
-    syn region ConqueCCBccc matchgroup=ConqueConceal start="\esbccc;" end="\eebccc;" concealends
+    syn region ConqueCCB000 matchgroup=ConqueCCBG start="\esb000;" end="\eeb000;" concealends
+    syn region ConqueCCB00c matchgroup=ConqueCCBG start="\esb00c;" end="\eeb00c;" concealends
+    syn region ConqueCCB0c0 matchgroup=ConqueCCBG start="\esb0c0;" end="\eeb0c0;" concealends
+    syn region ConqueCCB0cc matchgroup=ConqueCCBG start="\esb0cc;" end="\eeb0cc;" concealends
+    syn region ConqueCCBc00 matchgroup=ConqueCCBG start="\esbc00;" end="\eebc00;" concealends
+    syn region ConqueCCBc0c matchgroup=ConqueCCBG start="\esbc0c;" end="\eebc0c;" concealends
+    syn region ConqueCCBcc0 matchgroup=ConqueCCBG start="\esbcc0;" end="\eebcc0;" concealends
+    syn region ConqueCCBccc matchgroup=ConqueCCBG start="\esbccc;" end="\eebccc;" concealends
 
     " background colors, high intensity
-    syn region ConqueCCB000 matchgroup=ConqueConceal start="\esb000;" end="\eeb000;" concealends
-    syn region ConqueCCB00f matchgroup=ConqueConceal start="\esb00f;" end="\eeb00f;" concealends
-    syn region ConqueCCB0f0 matchgroup=ConqueConceal start="\esb0f0;" end="\eeb0f0;" concealends
-    syn region ConqueCCB0ff matchgroup=ConqueConceal start="\esb0ff;" end="\eeb0ff;" concealends
-    syn region ConqueCCBf00 matchgroup=ConqueConceal start="\esbf00;" end="\eebf00;" concealends
-    syn region ConqueCCBf0f matchgroup=ConqueConceal start="\esbf0f;" end="\eebf0f;" concealends
-    syn region ConqueCCBff0 matchgroup=ConqueConceal start="\esbff0;" end="\eebff0;" concealends
-    syn region ConqueCCBfff matchgroup=ConqueConceal start="\esbfff;" end="\eebfff;" concealends
+    syn region ConqueCCB000 matchgroup=ConqueCCBG start="\esb000;" end="\eeb000;" concealends
+    syn region ConqueCCB00f matchgroup=ConqueCCBG start="\esb00f;" end="\eeb00f;" concealends
+    syn region ConqueCCB0f0 matchgroup=ConqueCCBG start="\esb0f0;" end="\eeb0f0;" concealends
+    syn region ConqueCCB0ff matchgroup=ConqueCCBG start="\esb0ff;" end="\eeb0ff;" concealends
+    syn region ConqueCCBf00 matchgroup=ConqueCCBG start="\esbf00;" end="\eebf00;" concealends
+    syn region ConqueCCBf0f matchgroup=ConqueCCBG start="\esbf0f;" end="\eebf0f;" concealends
+    syn region ConqueCCBff0 matchgroup=ConqueCCBG start="\esbff0;" end="\eebff0;" concealends
+    syn region ConqueCCBfff matchgroup=ConqueCCBG start="\esbfff;" end="\eebfff;" concealends
 
 
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

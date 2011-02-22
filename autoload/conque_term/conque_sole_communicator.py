@@ -86,12 +86,15 @@ if __name__ == '__main__':
         # console height
         console_height = int(sys.argv[3])
 
+        # code page
+        code_page = int(sys.argv[4])
+
         # the actual subprocess to run
-        cmd_line = " ".join(sys.argv[4:])
+        cmd_line = " ".join(sys.argv[5:])
         logging.info('opening command: ' + cmd_line)
 
         # width and height
-        options = {'LINES': console_height, 'COLUMNS': console_width}
+        options = {'LINES': console_height, 'COLUMNS': console_width, 'CODE_PAGE': code_page}
 
         logging.info('with options: ' + str(options))
 

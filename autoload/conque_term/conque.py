@@ -40,6 +40,7 @@ Second, the Conque class handles Unix terminal escape sequence parsing.
 import vim
 import re
 import math
+import md5
 
 import time # DEBUG
 
@@ -86,6 +87,12 @@ class Conque:
     # color history
     color_history = {}
 
+    # color highlight cache
+    highlight_groups = {}
+
+    # prune terminal colors
+    color_pruning = True
+
     # don't wrap table output
     unwrap_tables = True
 
@@ -117,6 +124,10 @@ class Conque:
         self.working_columns = vim.current.window.width
         self.working_lines = vim.current.window.height
         self.bottom = vim.current.window.height
+
+        # offset first line to make room for startup messages
+        if options['offset'] > 0:
+            self.l = options['offset']
 
         # init color
         self.enable_colors = options['color']
@@ -329,12 +340,15 @@ class Conque:
     def auto_read(self): # {{{
 
         # check subprocess status, but not every time since it's CPU expensive
-        if self.read_count == 10:
+        if self.read_count % 16 == 0:
             if not self.proc.is_alive():
                 vim.command('call conque_term#get_instance().close()')
                 return
-            else:
+            if self.read_count > 1024:
                 self.read_count = 0
+                # clear old color highlighting
+                #if self.enable_colors and self.color_pruning:
+                #    self.prune_colors()
         self.read_count += 1
 
         # read output
@@ -362,9 +376,9 @@ class Conque:
     # }}}
 
     ###############################################################################################
-    # Plain text # {{{
+    # Plain text and color codes # {{{
 
-    def plain_text(self, input):
+    def plain_text(self, input): # {{{
 
         # translate input into correct character set
         if self.character_set == 'graphics':
@@ -420,7 +434,9 @@ class Conque:
             self.apply_color(self.c, self.c + len(input))
             self.c += len(input)
 
-    def apply_color(self, start, end, line=0):
+    # }}}
+
+    def apply_color(self, start, end, line=0): # {{{
         logging.debug('applying colors ' + str(self.color_changes))
 
         # stop here if coloration is disabled
@@ -473,13 +489,25 @@ class Conque:
         # execute the highlight
         self.exec_highlight(real_line, start, end, highlight)
 
-    def exec_highlight(self, real_line, start, end, highlight):
-        unique_key = str(self.proc.pid)
+    # }}}
 
-        syntax_name = 'EscapeSequenceAt_' + unique_key + '_' + str(self.l) + '_' + str(start) + '_' + str(len(self.color_history) + 1)
-        syntax_options = ' contains=ALLBUT,ConqueString,MySQLString,MySQLKeyword oneline'
-        syntax_region = 'syntax match ' + syntax_name + ' /\%' + str(real_line) + 'l\%>' + str(start - 1) + 'c.*\%<' + str(end + 1) + 'c/' + syntax_options
-        syntax_highlight = 'highlight ' + syntax_name + highlight
+    def exec_highlight(self, real_line, start, end, highlight): # {{{
+
+        syntax_name = 'ConqueHighLightAt_%d_%d_%d_%d' % (self.proc.pid, self.l, start, len(self.color_history) + 1)
+        syntax_options = 'contains=ALLBUT,ConqueString,MySQLString,MySQLKeyword oneline'
+        syntax_region = 'syntax match %s /\%%%dl\%%>%dc.\{%d}\%%<%dc/ %s' % (syntax_name, real_line, start - 1, end - start, end + 1, syntax_options)
+
+        # check for cached highlight group
+        hgroup = 'ConqueHL_%d' % (abs(hash(highlight)))
+        if hgroup not in self.highlight_groups:
+            syntax_group = 'highlight %s %s' % (hgroup, highlight)
+            self.highlight_groups[hgroup] = hgroup
+            vim.command(syntax_group)
+
+        # link this syntax match to existing highlight group
+        syntax_highlight = 'highlight link %s %s' % (syntax_name, self.highlight_groups[hgroup])
+
+        logging.debug(syntax_region)
 
         vim.command(syntax_region)
         vim.command(syntax_highlight)
@@ -489,6 +517,7 @@ class Conque:
             self.color_history[real_line] = []
 
         self.color_history[real_line].append({'name': syntax_name, 'start': start, 'end': end, 'highlight': highlight})
+    # }}}
 
     # }}}
 

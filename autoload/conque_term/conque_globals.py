@@ -53,7 +53,7 @@ elif os.path.exists('C:/Documents and Settings/nraffo/vimfiles/'): # DEBUG
 elif os.path.exists('/Users/nraffo/vimfiles/'): # DEBUG
     CONQUE_LOG_FILENAME = '/Users/nraffo/vimfiles/pylog.log' # DEBUG
 
-CONQUE_LOG_LEVEL = logging.DEBUG #DEBUG
+CONQUE_LOG_LEVEL = logging.INFO #DEBUG
 
 if CONQUE_LOG_FILENAME: # DEBUG
     logging.basicConfig(filename=CONQUE_LOG_FILENAME, level=CONQUE_LOG_LEVEL) # DEBUG
