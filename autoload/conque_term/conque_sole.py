@@ -225,7 +225,7 @@ class ConqueSole(Conque):
         else:
             self.buffer[line_nr] = val
 
-        if self.enable_colors and not self.color_mode == 'conceal':
+        if self.enable_colors and not self.color_mode == 'conceal' and line_nr > self.l - CONQUE_MAX_SYNTAX_LINES:
             relevant = attributes[0:len(text)]
             if line_nr not in self.attribute_cache or self.attribute_cache[line_nr] != relevant:
                 self.do_color(attributes=relevant, stats=stats)

@@ -57,14 +57,28 @@ if !exists('g:ConqueTerm_EscKey')
     let g:ConqueTerm_EscKey = '<Esc>'
 endif " }}}
 
+" Use this key to execute the current file in a split window. {{{
+" THIS IS A GLOBAL KEY MAPPING
+if !exists('g:ConqueTerm_ExecFileKey')
+    let g:ConqueTerm_ExecFileKey = '<LocalLeader><F11>'
+endif " }}}
+
+" Use this key to send the current file contents to conque. {{{
+" THIS IS A GLOBAL KEY MAPPING
+if !exists('g:ConqueTerm_SendFileKey')
+    let g:ConqueTerm_SendFileKey = '<LocalLeader><F10>'
+endif " }}}
+
 " Use this key to send selected text to conque. {{{
+" THIS IS A GLOBAL KEY MAPPING
 if !exists('g:ConqueTerm_SendVisKey')
-    let g:ConqueTerm_SendVisKey = '<F9>'
+    let g:ConqueTerm_SendVisKey = '<LocalLeader><F9>'
 endif " }}}
 
 " Use this key to toggle terminal key mappings. {{{
+" Only mapped inside of Conque buffers.
 if !exists('g:ConqueTerm_ToggleKey')
-    let g:ConqueTerm_ToggleKey = '<F8>'
+    let g:ConqueTerm_ToggleKey = '<LocalLeader><F8>'
 endif " }}}
 
 " Enable color. {{{

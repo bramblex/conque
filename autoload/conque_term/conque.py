@@ -344,11 +344,15 @@ class Conque:
             if not self.proc.is_alive():
                 vim.command('call conque_term#get_instance().close()')
                 return
-            if self.read_count > 1024:
+
+            if self.read_count > 512:
                 self.read_count = 0
-                # clear old color highlighting
-                #if self.enable_colors and self.color_pruning:
-                #    self.prune_colors()
+
+                # trim color history occasionally if desired
+                if self.enable_colors and self.color_pruning:
+                    self.prune_colors()
+
+        # ++
         self.read_count += 1
 
         # read output
@@ -517,6 +521,17 @@ class Conque:
             self.color_history[real_line] = []
 
         self.color_history[real_line].append({'name': syntax_name, 'start': start, 'end': end, 'highlight': highlight})
+    # }}}
+
+    def prune_colors(self): # {{{
+        """ remove syntax highlighting older than CONQUE_MAX_SYNTAX_LINES up the screen"""
+        logging.debug('pruning colors ' + str(len(self.color_history.keys())))
+
+        for real_line in self.color_history.keys():
+            if real_line < self.l - CONQUE_MAX_SYNTAX_LINES:
+                for syn in self.color_history[real_line]:
+                    vim.command('syn clear ' + syn['name'])
+                del self.color_history[real_line]
     # }}}
 
     # }}}

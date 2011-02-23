@@ -940,13 +940,14 @@ function! conque_term#on_focus(...) " {{{
         sil exe s:py . ' ' . g:ConqueTerm_Var . '.resume()'
     endif
 
+    " TODO - why does this break stuff?
     " disable MatchParen, it slows down rendering   
-    if exists('loaded_matchparen') || exists(':NoMatchParen')
-      try
-          NoMatchParen
-      catch
-      endtry
-    endif
+    "if exists('loaded_matchparen') || exists(':NoMatchParen')
+    "  try
+    "      NoMatchParen
+    "  catch
+    "  endtry
+    "endif
 
     " if configured, go into insert mode
     if g:ConqueTerm_InsertOnEnter == 1
@@ -979,13 +980,14 @@ function! conque_term#on_blur() " {{{
         set updatetime=2000
     endif
 
+    " TODO - why does this break stuff?
     " re-enable MatchParen
-    if exists('loaded_matchparen') || exists(':DoMatchParen')
-      try
-          DoMatchParen
-      catch
-      endtry
-    endif
+    "if exists('loaded_matchparen') || exists(':DoMatchParen')
+    "  try
+    "      DoMatchParen
+    "  catch
+    "  endtry
+    "endif
 
 endfunction " }}}
 

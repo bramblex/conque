@@ -78,6 +78,9 @@ CONQUE_SOLE_BUFFER_REDRAW = 500
 # larger number means less frequent, 1 = every time
 CONQUE_SOLE_MEM_REDRAW = 1000
 
+# maximum number of lines with terminal colors
+CONQUE_MAX_SYNTAX_LINES = 200
+
 # PYTHON VERSION
 CONQUE_PYTHON_VERSION = sys.version_info[0]
 
