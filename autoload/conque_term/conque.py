@@ -449,16 +449,16 @@ class Conque:
 
         # allow custom line nr to be passed
         if line:
-            real_line = line
+            buffer_line = line
         else:
-            real_line = self.screen.get_real_line(self.l)
+            buffer_line = self.get_buffer_line(self.l)
 
         # check for previous overlapping coloration
         logging.debug('start ' + str(start) + ' end ' + str(end))
         to_del = []
-        if real_line in self.color_history:
-            for i in range(len(self.color_history[real_line])):
-                syn = self.color_history[real_line][i]
+        if buffer_line in self.color_history:
+            for i in range(len(self.color_history[buffer_line])):
+                syn = self.color_history[buffer_line][i]
                 logging.debug('checking syn ' + str(syn))
                 if syn['start'] >= start and syn['start'] < end:
                     logging.debug('first')
@@ -467,7 +467,7 @@ class Conque:
                     # outside
                     if syn['end'] > end:
                         logging.debug('first.half')
-                        self.exec_highlight(real_line, end, syn['end'], syn['highlight'])
+                        self.exec_highlight(buffer_line, end, syn['end'], syn['highlight'])
                 elif syn['end'] > start and syn['end'] <= end:
                     logging.debug('second')
                     vim.command('syn clear ' + syn['name'])
@@ -475,12 +475,12 @@ class Conque:
                     # outside
                     if syn['start'] < start:
                         logging.debug('second.half')
-                        self.exec_highlight(real_line, syn['start'], start, syn['highlight'])
+                        self.exec_highlight(buffer_line, syn['start'], start, syn['highlight'])
 
         if len(to_del) > 0:
             to_del.reverse()
             for di in to_del:
-                del self.color_history[real_line][di]
+                del self.color_history[buffer_line][di]
 
         # if there are no new colors
         if len(self.color_changes) == 0:
@@ -491,15 +491,15 @@ class Conque:
             highlight = highlight + ' ' + attr + '=' + self.color_changes[attr]
 
         # execute the highlight
-        self.exec_highlight(real_line, start, end, highlight)
+        self.exec_highlight(buffer_line, start, end, highlight)
 
     # }}}
 
-    def exec_highlight(self, real_line, start, end, highlight): # {{{
+    def exec_highlight(self, buffer_line, start, end, highlight): # {{{
 
         syntax_name = 'ConqueHighLightAt_%d_%d_%d_%d' % (self.proc.pid, self.l, start, len(self.color_history) + 1)
         syntax_options = 'contains=ALLBUT,ConqueString,MySQLString,MySQLKeyword oneline'
-        syntax_region = 'syntax match %s /\%%%dl\%%>%dc.\{%d}\%%<%dc/ %s' % (syntax_name, real_line, start - 1, end - start, end + 1, syntax_options)
+        syntax_region = 'syntax match %s /\%%%dl\%%>%dc.\{%d}\%%<%dc/ %s' % (syntax_name, buffer_line, start - 1, end - start, end + 1, syntax_options)
 
         # check for cached highlight group
         hgroup = 'ConqueHL_%d' % (abs(hash(highlight)))
@@ -517,21 +517,23 @@ class Conque:
         vim.command(syntax_highlight)
 
         # add syntax name to history
-        if not real_line in self.color_history:
-            self.color_history[real_line] = []
+        if not buffer_line in self.color_history:
+            self.color_history[buffer_line] = []
 
-        self.color_history[real_line].append({'name': syntax_name, 'start': start, 'end': end, 'highlight': highlight})
+        self.color_history[buffer_line].append({'name': syntax_name, 'start': start, 'end': end, 'highlight': highlight})
     # }}}
 
     def prune_colors(self): # {{{
         """ remove syntax highlighting older than CONQUE_MAX_SYNTAX_LINES up the screen"""
         logging.debug('pruning colors ' + str(len(self.color_history.keys())))
 
-        for real_line in self.color_history.keys():
-            if real_line < self.l - CONQUE_MAX_SYNTAX_LINES:
-                for syn in self.color_history[real_line]:
+        buffer_line = self.get_buffer_line(self.l)
+
+        for line in self.color_history.keys():
+            if line < buffer_line - CONQUE_MAX_SYNTAX_LINES:
+                for syn in self.color_history[line]:
                     vim.command('syn clear ' + syn['name'])
-                del self.color_history[real_line]
+                del self.color_history[line]
     # }}}
 
     # }}}
@@ -659,9 +661,9 @@ class Conque:
 
         # clear colors
         if csi['val'] == 2 or (csi['val'] == 0 and self.c == 1):
-            real_line = self.screen.get_real_line(self.l)
-            if real_line in self.color_history:
-                for syn in self.color_history[real_line]:
+            buffer_line = self.get_buffer_line(self.l)
+            if buffer_line in self.color_history:
+                for syn in self.color_history[buffer_line]:
                     vim.command('syn clear ' + syn['name'])
 
         logging.debug(str(self.color_changes))
@@ -742,9 +744,9 @@ class Conque:
 
         # clear coloration
         if csi['val'] == 2 or csi['val'] == 0:
-            real_line = self.screen.get_real_line(self.l)
+            buffer_line = self.get_buffer_line(self.l)
             for line in self.color_history.keys():
-                if line >= real_line:
+                if line >= buffer_line:
                     for syn in self.color_history[line]:
                         vim.command('syn clear ' + syn['name'])
 
@@ -1036,6 +1038,10 @@ class Conque:
             return grey_tone + grey_tone + grey_tone
         # }}}
 
+    # }}}
+
+    def get_buffer_line(self, line): # {{{
+        return self.screen.get_buffer_line(line)
     # }}}
 
 # vim:foldmethod=marker

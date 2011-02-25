@@ -131,7 +131,7 @@ class ConqueSole(Conque):
                 if return_output:
                     output = self.get_new_output(lines, update_top, stats)
                 if update_buffer:
-                    if lines[0].rstrip() != self.buffer[update_top].rstrip():
+                    if lines[0].rstrip() != u(self.buffer[update_top].rstrip()):
                         self.plain_text(update_top, lines[0], attributes[0], stats)
 
 
@@ -402,21 +402,21 @@ class ConqueSole(Conque):
         logging.debug('column is now ' + str(column))
 
         # figure out line
-        real_line = line
-        if real_line > len(self.buffer):
-            for l in range(len(self.buffer) - 1, real_line):
+        buffer_line = line
+        if buffer_line > len(self.buffer):
+            for l in range(len(self.buffer) - 1, buffer_line):
                 self.buffer.append('')
 
         # figure out column
         real_column = column
-        if len(self.buffer[real_line - 1]) < real_column:
-            self.buffer[real_line - 1] = self.buffer[real_line - 1] + ' ' * (real_column - len(self.buffer[real_line - 1]))
+        if len(self.buffer[buffer_line - 1]) < real_column:
+            self.buffer[buffer_line - 1] = self.buffer[buffer_line - 1] + ' ' * (real_column - len(self.buffer[buffer_line - 1]))
 
         # python version is occasionally grumpy
         try:
-            vim.current.window.cursor = (real_line, real_column - 1)
+            vim.current.window.cursor = (buffer_line, real_column - 1)
         except:
-            vim.command('call cursor(' + str(real_line) + ', ' + str(real_column) + ')')
+            vim.command('call cursor(' + str(buffer_line) + ', ' + str(real_column) + ')')
     # }}}
 
 
@@ -450,5 +450,11 @@ class ConqueSole(Conque):
     def abort(self):
         self.proc.close()
 
+    # *********************************************************************************************
+    # get buffer line
+
+    def get_buffer_line(self, line): # {{{
+        return line
+    # }}}
 
 # vim:foldmethod=marker

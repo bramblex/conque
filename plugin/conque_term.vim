@@ -35,136 +35,6 @@ if exists('g:ConqueTerm_Loaded') || v:version < 700
 endif
 
 " **********************************************************************************************************
-" **** CONFIG **********************************************************************************************
-" **********************************************************************************************************
-
-" {{{
-
-" automatically go into insert mode when entering buffer {{{
-if !exists('g:ConqueTerm_InsertOnEnter')
-    let g:ConqueTerm_InsertOnEnter = 0
-endif " }}}
-
-" Allow user to use <C-w> keys to switch window in insert mode. {{{
-if !exists('g:ConqueTerm_CWInsert')
-    let g:ConqueTerm_CWInsert = 0
-endif " }}}
-
-" Choose key mapping to leave insert mode {{{
-" If you choose something other than '<Esc>', then <Esc> will be sent to terminal
-" Using a different key will usually fix Alt/Meta key issues
-if !exists('g:ConqueTerm_EscKey')
-    let g:ConqueTerm_EscKey = '<Esc>'
-endif " }}}
-
-" Use this key to execute the current file in a split window. {{{
-" THIS IS A GLOBAL KEY MAPPING
-if !exists('g:ConqueTerm_ExecFileKey')
-    let g:ConqueTerm_ExecFileKey = '<LocalLeader><F11>'
-endif " }}}
-
-" Use this key to send the current file contents to conque. {{{
-" THIS IS A GLOBAL KEY MAPPING
-if !exists('g:ConqueTerm_SendFileKey')
-    let g:ConqueTerm_SendFileKey = '<LocalLeader><F10>'
-endif " }}}
-
-" Use this key to send selected text to conque. {{{
-" THIS IS A GLOBAL KEY MAPPING
-if !exists('g:ConqueTerm_SendVisKey')
-    let g:ConqueTerm_SendVisKey = '<LocalLeader><F9>'
-endif " }}}
-
-" Use this key to toggle terminal key mappings. {{{
-" Only mapped inside of Conque buffers.
-if !exists('g:ConqueTerm_ToggleKey')
-    let g:ConqueTerm_ToggleKey = '<LocalLeader><F8>'
-endif " }}}
-
-" Enable color. {{{
-" If your apps use a lot of color it will slow down the shell.
-" 0 - no terminal colors. You still will see Vim syntax highlighting.
-" 1 - limited terminal colors (recommended). Past terminal color history cleared regularly.
-" 2 - all terminal colors. Terminal color history never cleared.
-if !exists('g:ConqueTerm_Color')
-    let g:ConqueTerm_Color = 1
-endif " }}}
-
-" Color mode. Windows ONLY {{{
-" Set this variable to 'conceal' to use Vim's conceal mode for terminal colors.
-" This makes colors render much faster, but has some odd baggage.
-if !exists('g:ConqueTerm_ColorMode')
-    let g:ConqueTerm_ColorMode = ''
-endif " }}}
-
-" TERM environment setting {{{
-if !exists('g:ConqueTerm_TERM')
-    let g:ConqueTerm_TERM =  'vt100'
-endif " }}}
-
-" Syntax for your buffer {{{
-if !exists('g:ConqueTerm_Syntax')
-    let g:ConqueTerm_Syntax = 'conque_term'
-endif " }}}
-
-" Keep on updating the shell window after you've switched to another buffer {{{
-if !exists('g:ConqueTerm_ReadUnfocused')
-    let g:ConqueTerm_ReadUnfocused = 0
-endif " }}}
-
-" Use this regular expression to highlight prompt {{{
-if !exists('g:ConqueTerm_PromptRegex')
-    let g:ConqueTerm_PromptRegex = '^\w\+@[0-9A-Za-z_.-]\+:[0-9A-Za-z_./\~,:-]\+\$'
-endif " }}}
-
-" Choose which Python version to attempt to load first {{{
-" Valid values are 2, 3 or 0 (no preference)
-if !exists('g:ConqueTerm_PyVersion')
-    let g:ConqueTerm_PyVersion = 2
-endif " }}}
-
-" Path to python.exe. (Windows only) {{{
-" By default, Conque will check C:\PythonNN\python.exe then will search system path
-" If you have installed Python in an unusual location and it's not in your path, fill in the full path below
-" E.g. 'C:\Program Files\Python\Python27\python.exe'
-if !exists('g:ConqueTerm_PyExe')
-    let g:ConqueTerm_PyExe = ''
-endif " }}}
-
-" Automatically close buffer when program exits {{{
-if !exists('g:ConqueTerm_CloseOnEnd')
-    let g:ConqueTerm_CloseOnEnd = 0
-endif " }}}
-
-" Send function key presses to terminal {{{
-if !exists('g:ConqueTerm_SendFunctionKeys')
-    let g:ConqueTerm_SendFunctionKeys = 0
-endif " }}}
-
-" Session support {{{
-if !exists('g:ConqueTerm_SessionSupport')
-    let g:ConqueTerm_SessionSupport = 0
-endif " }}}
-
-" hide Conque startup messages {{{
-" messages should only appear the first 3 times you start Vim with a new version of Conque
-" and include important Conque feature and option descriptions
-" TODO - disabled and unused for now
-if !exists('g:ConqueTerm_StartMessages')
-    let g:ConqueTerm_StartMessages = 0
-endif " }}}
-
-" Windows character code page {{{
-" Leave at 0 to use current environment code page.
-" Use 65001 for utf-8, although many console apps do not support it.
-if !exists('g:ConqueTerm_CodePage')
-    let g:ConqueTerm_CodePage = 0
-endif " }}}
-
-
-" }}}
-
-" **********************************************************************************************************
 " **** Startup *********************************************************************************************
 " **********************************************************************************************************
 
@@ -179,7 +49,7 @@ command! -nargs=+ -complete=shellcmd ConqueTermSplit call conque_term#open(<q-ar
 command! -nargs=+ -complete=shellcmd ConqueTermVSplit call conque_term#open(<q-args>, ['belowright vsplit'])
 command! -nargs=+ -complete=shellcmd ConqueTermTab call conque_term#open(<q-args>, ['tabnew'])
 
-if g:ConqueTerm_SessionSupport == 1
+if exists('g:ConqueTerm_SessionSupport') && g:ConqueTerm_SessionSupport == 1
     autocmd SessionLoadPost * call conque_term#resume_session()
 endif
 

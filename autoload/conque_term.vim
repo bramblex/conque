@@ -29,6 +29,136 @@
 " }}}
 
 " **********************************************************************************************************
+" **** CONFIGURATION ***************************************************************************************
+" **********************************************************************************************************
+
+" {{{
+
+" automatically go into insert mode when entering buffer {{{
+if !exists('g:ConqueTerm_InsertOnEnter')
+    let g:ConqueTerm_InsertOnEnter = 0
+endif " }}}
+
+" Allow user to use <C-w> keys to switch window in insert mode. {{{
+if !exists('g:ConqueTerm_CWInsert')
+    let g:ConqueTerm_CWInsert = 0
+endif " }}}
+
+" Choose key mapping to leave insert mode {{{
+" If you choose something other than '<Esc>', then <Esc> will be sent to terminal
+" Using a different key will usually fix Alt/Meta key issues
+if !exists('g:ConqueTerm_EscKey')
+    let g:ConqueTerm_EscKey = '<Esc>'
+endif " }}}
+
+" Use this key to execute the current file in a split window. {{{
+" THIS IS A GLOBAL KEY MAPPING
+if !exists('g:ConqueTerm_ExecFileKey')
+    let g:ConqueTerm_ExecFileKey = '<F11>'
+endif " }}}
+
+" Use this key to send the current file contents to conque. {{{
+" THIS IS A GLOBAL KEY MAPPING
+if !exists('g:ConqueTerm_SendFileKey')
+    let g:ConqueTerm_SendFileKey = '<F10>'
+endif " }}}
+
+" Use this key to send selected text to conque. {{{
+" THIS IS A GLOBAL KEY MAPPING
+if !exists('g:ConqueTerm_SendVisKey')
+    let g:ConqueTerm_SendVisKey = '<F9>'
+endif " }}}
+
+" Use this key to toggle terminal key mappings. {{{
+" Only mapped inside of Conque buffers.
+if !exists('g:ConqueTerm_ToggleKey')
+    let g:ConqueTerm_ToggleKey = '<F8>'
+endif " }}}
+
+" Enable color. {{{
+" If your apps use a lot of color it will slow down the shell.
+" 0 - no terminal colors. You still will see Vim syntax highlighting.
+" 1 - limited terminal colors (recommended). Past terminal color history cleared regularly.
+" 2 - all terminal colors. Terminal color history never cleared.
+if !exists('g:ConqueTerm_Color')
+    let g:ConqueTerm_Color = 1
+endif " }}}
+
+" Color mode. Windows ONLY {{{
+" Set this variable to 'conceal' to use Vim's conceal mode for terminal colors.
+" This makes colors render much faster, but has some odd baggage.
+if !exists('g:ConqueTerm_ColorMode')
+    let g:ConqueTerm_ColorMode = ''
+endif " }}}
+
+" TERM environment setting {{{
+if !exists('g:ConqueTerm_TERM')
+    let g:ConqueTerm_TERM =  'vt100'
+endif " }}}
+
+" Syntax for your buffer {{{
+if !exists('g:ConqueTerm_Syntax')
+    let g:ConqueTerm_Syntax = 'conque_term'
+endif " }}}
+
+" Keep on updating the shell window after you've switched to another buffer {{{
+if !exists('g:ConqueTerm_ReadUnfocused')
+    let g:ConqueTerm_ReadUnfocused = 0
+endif " }}}
+
+" Use this regular expression to highlight prompt {{{
+if !exists('g:ConqueTerm_PromptRegex')
+    let g:ConqueTerm_PromptRegex = '^\w\+@[0-9A-Za-z_.-]\+:[0-9A-Za-z_./\~,:-]\+\$'
+endif " }}}
+
+" Choose which Python version to attempt to load first {{{
+" Valid values are 2, 3 or 0 (no preference)
+if !exists('g:ConqueTerm_PyVersion')
+    let g:ConqueTerm_PyVersion = 2
+endif " }}}
+
+" Path to python.exe. (Windows only) {{{
+" By default, Conque will check C:\PythonNN\python.exe then will search system path
+" If you have installed Python in an unusual location and it's not in your path, fill in the full path below
+" E.g. 'C:\Program Files\Python\Python27\python.exe'
+if !exists('g:ConqueTerm_PyExe')
+    let g:ConqueTerm_PyExe = ''
+endif " }}}
+
+" Automatically close buffer when program exits {{{
+if !exists('g:ConqueTerm_CloseOnEnd')
+    let g:ConqueTerm_CloseOnEnd = 0
+endif " }}}
+
+" Send function key presses to terminal {{{
+if !exists('g:ConqueTerm_SendFunctionKeys')
+    let g:ConqueTerm_SendFunctionKeys = 0
+endif " }}}
+
+" Session support {{{
+if !exists('g:ConqueTerm_SessionSupport')
+    let g:ConqueTerm_SessionSupport = 0
+endif " }}}
+
+" hide Conque startup messages {{{
+" messages should only appear the first 3 times you start Vim with a new version of Conque
+" and include important Conque feature and option descriptions
+" TODO - disabled and unused for now
+if !exists('g:ConqueTerm_StartMessages')
+    let g:ConqueTerm_StartMessages = 0
+endif " }}}
+
+" Windows character code page {{{
+" Leave at 0 to use current environment code page.
+" Use 65001 for utf-8, although many console apps do not support it.
+if !exists('g:ConqueTerm_CodePage')
+    let g:ConqueTerm_CodePage = 0
+endif " }}}
+
+
+" }}}
+
+" **********************************************************************************************************
 " **** CROSS-TERMINAL SETTINGS *****************************************************************************
 " **********************************************************************************************************
 
@@ -60,6 +190,8 @@ let g:ConqueTerm_Idx = 0
 let s:save_updatetime = &updatetime
 
 let s:initialized = 0
+
+let s:hooks = { 'after_startup': [], 'buffer_enter': [], 'buffer_leave': [] }
 
 " }}}
 
@@ -502,6 +634,9 @@ function! conque_term#open(...) "{{{
         call conque_term#set_mappings('start')
     endif
 
+    " call user defined functions
+    call conque_term#call_hooks('after_startup', t_obj)
+
     " switch to buffer if needed
     if is_buffer && return_to_current
         " jump back to code buffer
@@ -782,9 +917,18 @@ function! conque_term#set_mappings(action) "{{{
     endif
     " }}}
 
-    " send selected text into conque {{{
+    " various global mappings {{{
+    " don't overwrite existing mappings
     if l:action == 'start'
-        sil exe 'v' . map_modifier . 'map <silent> ' . g:ConqueTerm_SendVisKey . ' :<C-u>call conque_term#send_selected(visualmode())<CR>'
+        if maparg(g:ConqueTerm_SendVisKey, 'v') == ''
+          sil exe 'v' . map_modifier . 'map <silent> ' . g:ConqueTerm_SendVisKey . ' :<C-u>call conque_term#send_selected(visualmode())<CR>'
+        endif
+        if maparg(g:ConqueTerm_SendFileKey, 'n') == ''
+          sil exe 'n' . map_modifier . 'map <silent> ' . g:ConqueTerm_SendFileKey . ' :<C-u>call conque_term#send_file()<CR>'
+        endif
+        if maparg(g:ConqueTerm_ExecFileKey, 'n') == ''
+          sil exe 'n' . map_modifier . 'map <silent> ' . g:ConqueTerm_ExecFileKey . ' :<C-u>call conque_term#exec_file()<CR>'
+        endif
     endif
     " }}}
 
@@ -940,14 +1084,10 @@ function! conque_term#on_focus(...) " {{{
         sil exe s:py . ' ' . g:ConqueTerm_Var . '.resume()'
     endif
 
-    " TODO - why does this break stuff?
-    " disable MatchParen, it slows down rendering   
-    "if exists('loaded_matchparen') || exists(':NoMatchParen')
-    "  try
-    "      NoMatchParen
-    "  catch
-    "  endtry
-    "endif
+    " call user defined functions
+    if startup == 0
+        call conque_term#call_hooks('buffer_enter', conque_term#get_instance())
+    endif
 
     " if configured, go into insert mode
     if g:ConqueTerm_InsertOnEnter == 1
@@ -980,20 +1120,41 @@ function! conque_term#on_blur() " {{{
         set updatetime=2000
     endif
 
-    " TODO - why does this break stuff?
-    " re-enable MatchParen
-    "if exists('loaded_matchparen') || exists(':DoMatchParen')
-    "  try
-    "      DoMatchParen
-    "  catch
-    "  endtry
-    "endif
+    " call user defined functions
+    call conque_term#call_hooks('buffer_leave', conque_term#get_instance())
 
 endfunction " }}}
 
 " bell event (^G)
 function! conque_term#bell() " {{{
     echohl WarningMsg | echomsg "BELL!" | echohl None
+endfunction " }}}
+
+" register function to be called at conque events
+function! conque_term#register_function(event, function_name) " {{{
+
+    if !has_key(s:hooks, a:event)
+        echomsg 'No such event: ' . a:event
+        return
+    endif
+
+    if !exists('*' . a:function_name)
+        echomsg 'No such function: ' . a:function_name)
+        return
+    endif
+
+    " register the function
+    call add(s:hooks[a:event], function(a:function_name))
+
+endfunction " }}}
+
+" call hooks for an event
+function! conque_term#call_hooks(event, t_obj) " {{{
+
+    for Fu in s:hooks[a:event]
+        call Fu(a:t_obj)
+    endfor
+
 endfunction " }}}
 
 " }}}
@@ -1159,31 +1320,55 @@ endfunction " }}}
 
 " send selected text from another buffer
 function! conque_term#send_selected(type) "{{{
+
+    " get most recent/relevant terminal
+    let term = conque_term#get_instance()
+
+    " shove visual text into @@ register
     let reg_save = @@
-
-    " save user's sb settings
-    let sb_save = &switchbuf
-    set switchbuf=usetab
-
-    " yank current selection
     sil exe "normal! `<" . a:type . "`>y"
-
-    " format yanked text
     let @@ = substitute(@@, '^[\r\n]*', '', '')
     let @@ = substitute(@@, '[\r\n]*$', '', '')
 
+    " go to terminal buffer
+    call term.focus()
+
     " execute yanked text
-    sil exe ":sb " . g:ConqueTerm_BufName
-    sil exe s:py . ' ' . g:ConqueTerm_Var . '.write_expr("@@")'
+    call term.write(@@)
 
     " reset original values
     let @@ = reg_save
-    sil exe 'set switchbuf=' . sb_save
 
     " scroll buffer left
     startinsert!
     normal 0zH
+
 endfunction "}}}
+
+function! conque_term#send_file() "{{{
+
+    let file_lines = readfile(expand('%:p'))
+    if type(file_lines) == 3 && len(file_lines) > 0
+        let term = conque_term#get_instance()
+        call term.focus()
+
+        for line in file_lines
+            call term.writeln(line)
+        endfor
+    else
+        echomsg 'Could not read file: ' . expand('%:p')
+    endif
+
+endfunction "}}}
+
+
+function! conque_term#exec_file() "{{{
+
+    let current_file = expand('%:p')
+    sil exe ':ConqueTermSplit ' . current_file
+
+endfunction "}}}
+
 
 " called on SessionLoadPost event
 function! conque_term#resume_session() " {{{
@@ -1226,17 +1411,39 @@ endfunction " }}}
 " See doc/conque_term.txt for full documentation {{{
 
 " Write to a conque terminal buffer
-function! s:term_obj.write(text) dict " {{{
+function! s:term_obj.write(...) dict " {{{
+
+    let text = get(a:000, 0, '')
+    let jump_to_buffer = get(a:000, 1, 0)
 
     " if we're not in terminal buffer, pass flag to not position the cursor
-    sil exe s:py . ' ' . self.var . '.write_expr("a:text", False, False)'
+    sil exe s:py . ' ' . self.var . '.write_expr("text", False, False)'
+
+    " move cursor to conque buffer
+    if jump_to_buffer
+        call self.focus()
+    endif
 
 endfunction " }}}
 
 " same as write() but adds a newline
-function! s:term_obj.writeln(text) dict " {{{
+function! s:term_obj.writeln(...) dict " {{{
 
-    call self.write(a:text . "\r")
+    let text = get(a:000, 0, '')
+    let jump_to_buffer = get(a:000, 1, 0)
+
+    call self.write(text . "\r", jump_to_buffer)
+
+endfunction " }}}
+
+" move cursor to terminal buffer
+function! s:term_obj.focus() dict " {{{
+
+    let save_sb = &switchbuf
+    sil set switchbuf=usetab
+    exe 'sb ' . self.buffer_name
+    sil exe ":set switchbuf=" . save_sb
+    startinsert!
 
 endfunction " }}}
 
@@ -1334,12 +1541,19 @@ function! conque_term#create_terminal_object(...) " {{{
     " the command
     let command = get(a:000, 3, '')
 
+    " parse out the program name (not perfect)
+    let arg_split = split(command, '[^\\]\@<=\s')
+    let arg_split[0] = substitute(arg_split[0], '\\ ', ' ', 'g')
+    let slash_split = split(arg_split[0], '[/\\]')
+    let prg_name = substitute(slash_split[-1], '\(.*\)\..*', '\1', '')
+
     let l:t_obj = copy(s:term_obj)
     let l:t_obj.is_buffer = is_buffer
     let l:t_obj.idx = buf_num
     let l:t_obj.buffer_name = bname
     let l:t_obj.var = pvar
     let l:t_obj.command = command
+    let l:t_obj.program_name = prg_name
 
     return l:t_obj
 
