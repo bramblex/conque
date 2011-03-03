@@ -518,7 +518,7 @@ class ConqueSoleSubprocess():
         self.shm_input.clear()
 
         # split on VK codes
-        chunks = CONQUE_SEQ_REGEX_VK.split(text)
+        chunks = CONQUE_WIN32_REGEX_VK.split(text)
 
         # if len() is one then no vks
         if len(chunks) == 1:
@@ -533,7 +533,7 @@ class ConqueSoleSubprocess():
             if t == '':
                 continue
 
-            if CONQUE_SEQ_REGEX_VK.match(t):
+            if CONQUE_WIN32_REGEX_VK.match(t):
                 logging.debug('match!: ' + str(t[2:-2]))
                 self.write_vk(t[2:-2])
             else:
@@ -566,14 +566,17 @@ class ConqueSoleSubprocess():
                 ctypes.windll.kernel32.GenerateConsoleCtrlEvent(0, self.pid)
                 ke.uChar.UnicodeChar = uchr(cnum)
                 ke.wVirtualKeyCode = ctypes.windll.user32.VkKeyScanW(cnum + 96)
-                ke.dwControlKeyState = LEFT_CTRL_PRESSED
+                ke.dwControlKeyState |= LEFT_CTRL_PRESSED
             else:
                 ke.uChar.UnicodeChar = uchr(cnum)
                 if cnum in CONQUE_WINDOWS_VK_INV:
                     ke.wVirtualKeyCode = cnum
                 else:
                     ke.wVirtualKeyCode = ctypes.windll.user32.VkKeyScanW(cnum + 96)
-                    ke.dwControlKeyState = LEFT_CTRL_PRESSED
+                    ke.dwControlKeyState |= LEFT_CTRL_PRESSED
+
+            logging.info(str(ord(text[i])) + ' ' + text[i])
+            logging.info(ke.dwControlKeyState)
 
             kc = INPUT_RECORD(KEY_EVENT)
             kc.Event.KeyEvent = ke
@@ -599,20 +602,36 @@ class ConqueSoleSubprocess():
     def write_vk(self, vk_code): # {{{
         logging.debug('virtual key code' + str(vk_code))
 
+        code = None
+        ctrl_pressed = False
+
+        # this could be made more generic when more attributes
+        # other than ctrl_pressed are available
+        vk_attributes = vk_code.split(';')
+        logging.debug(vk_attributes)
+        for attr in vk_attributes:
+            if attr == CONQUE_VK_ATTR_CTRL_PRESSED:
+                ctrl_pressed = True
+            else:
+                code = attr
+
         li = INPUT_RECORD * 1
 
         # create keyboard input
         ke = KEY_EVENT_RECORD()
         ke.uChar.UnicodeChar = uchr(0)
-        ke.wVirtualKeyCode = ctypes.c_short(int(vk_code))
-        ke.wVirtualScanCode = ctypes.c_short(ctypes.windll.user32.MapVirtualKeyW(int(vk_code), 0))
+        ke.wVirtualKeyCode = ctypes.c_short(int(code))
+        ke.wVirtualScanCode = ctypes.c_short(ctypes.windll.user32.MapVirtualKeyW(int(code), 0))
         ke.bKeyDown = ctypes.c_byte(1)
         ke.wRepeatCount = ctypes.c_short(1)
 
         # set enhanced key mode for arrow keys
-        if vk_code in CONQUE_WINDOWS_VK_ENHANCED:
+        if code in CONQUE_WINDOWS_VK_ENHANCED:
             logging.debug('enhanced key!')
-            ke.dwControlKeyState = ENHANCED_KEY
+            ke.dwControlKeyState |= ENHANCED_KEY
+
+        if ctrl_pressed:
+            ke.dwControlKeyState |= LEFT_CTRL_PRESSED
 
         kc = INPUT_RECORD(KEY_EVENT)
         kc.Event.KeyEvent = ke
@@ -622,7 +641,6 @@ class ConqueSoleSubprocess():
         events_written = ctypes.c_int()
         res = ctypes.windll.kernel32.WriteConsoleInputW(self.stdin, list_input, 1, ctypes.byref(events_written))
 
-        logging.debug('bar')
         logging.debug('events written ' + str(events_written))
         logging.debug(str(res))
         logging.debug(str(ctypes.GetLastError()))

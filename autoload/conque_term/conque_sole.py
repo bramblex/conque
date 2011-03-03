@@ -248,7 +248,7 @@ class ConqueSole(Conque):
         new_text = ''
         self.color_conceals[line_nr] = []
 
-        attribute_chunks = CONQUE_WIN32_ATTR_REGEX.findall(attributes)
+        attribute_chunks = CONQUE_WIN32_REGEX_ATTR.findall(attributes)
         offset = 0
         ends = []
         for attr in attribute_chunks:
@@ -292,7 +292,7 @@ class ConqueSole(Conque):
             self.apply_color(1, len(attributes), self.l)
             return
 
-        attribute_chunks = CONQUE_WIN32_ATTR_REGEX.findall(attributes)
+        attribute_chunks = CONQUE_WIN32_REGEX_ATTR.findall(attributes)
         offset = 0
         for attr in attribute_chunks:
             attr_num = ord(attr[1])
