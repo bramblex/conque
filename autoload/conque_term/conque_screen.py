@@ -87,7 +87,7 @@ class ConqueScreen(object):
         # if line is past buffer end, add lines to buffer
         if buffer_line >= len(self.buffer):
             for i in range(len(self.buffer), buffer_line + 1):
-                self.append(' ' * self.screen_width)
+                self.append(' ')
 
         return u(self.buffer[buffer_line], 'utf-8')
     # }}}
