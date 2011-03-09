@@ -117,6 +117,9 @@ class ConqueSoleSubprocess():
     # are we still a valid process?
     is_alive = True
 
+    # running in fast mode
+    fast_mode = 0
+
     # used for periodic execution of screen and memory redrawing
     screen_redraw_ct = 0
     mem_redraw_ct = 0
@@ -150,11 +153,14 @@ class ConqueSoleSubprocess():
 
             # set buffer height
             self.buffer_height = CONQUE_SOLE_BUFFER_LENGTH
-            logging.debug(str(options))
+            logging.info(str(options))
             if 'LINES' in options and 'COLUMNS' in options:
                 self.window_width = options['COLUMNS']
                 self.window_height = options['LINES']
                 self.buffer_width = options['COLUMNS']
+
+            # fast mode
+            self.fast_mode = options['FAST_MODE']
 
             # console window options
             si = STARTUPINFO()
@@ -261,9 +267,10 @@ class ConqueSoleSubprocess():
         self.shm_output.create('write')
         self.shm_output.clear()
 
-        self.shm_attributes = ConqueSoleSharedMemory(self.buffer_height * self.buffer_width, 'attributes', mem_key, True, chr(buf_info.wAttributes), encoding='latin-1')
-        self.shm_attributes.create('write')
-        self.shm_attributes.clear()
+        if not self.fast_mode:
+            self.shm_attributes = ConqueSoleSharedMemory(self.buffer_height * self.buffer_width, 'attributes', mem_key, True, chr(buf_info.wAttributes), encoding='latin-1')
+            self.shm_attributes.create('write')
+            self.shm_attributes.clear()
 
         self.shm_stats = ConqueSoleSharedMemory(CONQUE_SOLE_STATS_SIZE, 'stats', mem_key, serialize=True)
         self.shm_stats.create('write')
@@ -403,12 +410,14 @@ class ConqueSoleSubprocess():
             logging.debug('mem redraw')
             for i in range(0, len(self.data)):
                 self.shm_output.write(text=self.data[i], start=self.buffer_width * i)
-                self.shm_attributes.write(text=self.attributes[i], start=self.buffer_width * i)
+                if not self.fast_mode:
+                    self.shm_attributes.write(text=self.attributes[i], start=self.buffer_width * i)
         else:
             logging.debug('no mem redraw')
             for i in range(read_start, read_end):
                 self.shm_output.write(text=self.data[i], start=self.buffer_width * i)
-                self.shm_attributes.write(text=self.attributes[i], start=self.buffer_width * i)
+                if not self.fast_mode:
+                    self.shm_attributes.write(text=self.attributes[i], start=self.buffer_width * i)
                 #self.shm_output.write(text=''.join(self.data[read_start:read_end]), start=read_start * self.buffer_width)
                 #self.shm_attributes.write(text=''.join(self.attributes[read_start:read_end]), start=read_start * self.buffer_width)
 
@@ -447,8 +456,9 @@ class ConqueSoleSubprocess():
         self.shm_output.close()
         self.shm_output = None
 
-        self.shm_attributes.close()
-        self.shm_attributes = None
+        if not self.fast_mode:
+            self.shm_attributes.close()
+            self.shm_attributes = None
 
         # new shared memory key
         mem_key = 'mk' + str(time.time())
@@ -464,15 +474,17 @@ class ConqueSoleSubprocess():
                 self.data[i] = self.data[i] + ' ' * (self.buffer_width - len(self.data[i]))
         self.shm_output.write(''.join(self.data))
 
-        self.shm_attributes = ConqueSoleSharedMemory(self.buffer_height * self.buffer_width * self.output_blocks, 'attributes', mem_key, True, chr(buf_info.wAttributes), encoding='latin-1')
-        self.shm_attributes.create('write')
-        self.shm_attributes.clear()
+        if not self.fast_mode:
+            self.shm_attributes = ConqueSoleSharedMemory(self.buffer_height * self.buffer_width * self.output_blocks, 'attributes', mem_key, True, chr(buf_info.wAttributes), encoding='latin-1')
+            self.shm_attributes.create('write')
+            self.shm_attributes.clear()
 
         # backfill attributes
         if len(self.attributes[0]) < self.buffer_width:
             for i in range(0, len(self.attributes)):
                 self.attributes[i] = self.attributes[i] + chr(buf_info.wAttributes) * (self.buffer_width - len(self.attributes[i]))
-        self.shm_attributes.write(''.join(self.attributes))
+        if not self.fast_mode:
+            self.shm_attributes.write(''.join(self.attributes))
 
         # notify wrapper of new output block
         self.shm_rescroll.write({'cmd': 'new_output', 'data': {'blocks': self.output_blocks, 'mem_key': mem_key}})

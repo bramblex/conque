@@ -40,7 +40,6 @@ Second, the Conque class handles Unix terminal escape sequence parsing.
 import vim
 import re
 import math
-import md5
 
 import time # DEBUG
 
@@ -130,7 +129,7 @@ class Conque:
             self.l = options['offset']
 
         # init color
-        self.enable_colors = options['color']
+        self.enable_colors = options['color'] and not CONQUE_FAST_MODE
 
         # init tabstops
         self.init_tabstops()

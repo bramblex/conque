@@ -44,8 +44,8 @@ class ConqueSole(Conque):
     encoding = None
 
     # counters for periodic rendering
-    buffer_redraw_ct = 0
-    screen_redraw_ct = 0
+    buffer_redraw_ct = 1
+    screen_redraw_ct = 1
 
     # line offset, shifts output down
     offset = 0
@@ -68,7 +68,7 @@ class ConqueSole(Conque):
         self.offset = options['offset']
 
         # init color
-        self.enable_colors = options['color']
+        self.enable_colors = options['color'] and not CONQUE_FAST_MODE
 
         # open command
         self.proc = ConqueSoleWrapper()
@@ -91,8 +91,10 @@ class ConqueSole(Conque):
             if not stats:
                 return
 
-            self.buffer_redraw_ct += 1
-            self.screen_redraw_ct += 1
+            # disable screen and buffer redraws in fast mode
+            if not CONQUE_FAST_MODE:
+                self.buffer_redraw_ct += 1
+                self.screen_redraw_ct += 1
 
             update_top = 0
             update_bottom = 0
@@ -108,7 +110,10 @@ class ConqueSole(Conque):
                     output = self.get_new_output(lines, update_top, stats)
                 if update_buffer:
                     for i in range(update_top, update_bottom + 1):
-                        self.plain_text(i, lines[i], attributes[i], stats)
+                        if CONQUE_FAST_MODE:
+                            self.plain_text(i, lines[i], None, stats)
+                        else:
+                            self.plain_text(i, lines[i], attributes[i], stats)
 
             # full screen redraw
             elif stats['cursor_y'] + 1 != self.l or stats['top_offset'] != self.window_top or self.screen_redraw_ct == CONQUE_SOLE_SCREEN_REDRAW:
@@ -120,7 +125,10 @@ class ConqueSole(Conque):
                     output = self.get_new_output(lines, update_top, stats)
                 if update_buffer:
                     for i in range(update_top, update_bottom + 1):
-                        self.plain_text(i, lines[i - update_top], attributes[i - update_top], stats)
+                        if CONQUE_FAST_MODE:
+                            self.plain_text(i, lines[i - update_top], None, stats)
+                        else:
+                            self.plain_text(i, lines[i - update_top], attributes[i - update_top], stats)
 
 
             # single line redraw
@@ -132,7 +140,10 @@ class ConqueSole(Conque):
                     output = self.get_new_output(lines, update_top, stats)
                 if update_buffer:
                     if lines[0].rstrip() != u(self.buffer[update_top].rstrip()):
-                        self.plain_text(update_top, lines[0], attributes[0], stats)
+                        if CONQUE_FAST_MODE:
+                            self.plain_text(update_top, lines[0], None, stats)
+                        else:
+                            self.plain_text(update_top, lines[0], attributes[0], stats)
 
 
             # reset current position

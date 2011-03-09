@@ -172,15 +172,17 @@ class ConqueScreen(object):
         if len(self.buffer[buffer_line - 1]) < real_column:
             self.buffer[buffer_line - 1] = self.buffer[buffer_line - 1] + ' ' * (real_column - len(self.buffer[buffer_line - 1]))
 
-        # set cursor at byte index of real_column'th character
-        vim.command('call cursor(' + str(buffer_line) + ', byteidx(getline(' + str(buffer_line) + '), ' + str(real_column) + '))')
+        if not CONQUE_FAST_MODE:
+            # set cursor at byte index of real_column'th character
+            vim.command('call cursor(' + str(buffer_line) + ', byteidx(getline(' + str(buffer_line) + '), ' + str(real_column) + '))')
 
-        # old version
-        # python version is occasionally grumpy
-        #try:
-        #    vim.current.window.cursor = (buffer_line, real_column - 1)
-        #except:
-        #    vim.command('call cursor(' + str(buffer_line) + ', ' + str(real_column) + ')')
+        else:
+            # old version
+            # python version is occasionally grumpy
+            try:
+                vim.current.window.cursor = (buffer_line, real_column - 1)
+            except:
+                vim.command('call cursor(' + str(buffer_line) + ', ' + str(real_column) + ')')
     # }}}
 
     def reset_size(self, line): # {{{

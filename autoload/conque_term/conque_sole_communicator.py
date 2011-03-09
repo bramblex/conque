@@ -89,12 +89,15 @@ if __name__ == '__main__':
         # code page
         code_page = int(sys.argv[4])
 
+        # code page
+        fast_mode = int(sys.argv[5])
+
         # the actual subprocess to run
-        cmd_line = " ".join(sys.argv[5:])
+        cmd_line = " ".join(sys.argv[6:])
         logging.info('opening command: ' + cmd_line)
 
         # width and height
-        options = {'LINES': console_height, 'COLUMNS': console_width, 'CODE_PAGE': code_page}
+        options = {'LINES': console_height, 'COLUMNS': console_width, 'CODE_PAGE': code_page, 'FAST_MODE': fast_mode}
 
         logging.info('with options: ' + str(options))
 

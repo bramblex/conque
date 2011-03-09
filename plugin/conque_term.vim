@@ -40,6 +40,14 @@ endif
 
 " {{{
 
+" Fast mode {{{
+" Disables all features which could cause Conque to run slowly, including:
+"   * Disables terminal colors
+"   * Disables some multi-byte character handling
+if !exists('g:ConqueTerm_FastMode')
+    let g:ConqueTerm_FastMode = 1
+endif " }}}
+
 " automatically go into insert mode when entering buffer {{{
 if !exists('g:ConqueTerm_InsertOnEnter')
     let g:ConqueTerm_InsertOnEnter = 0

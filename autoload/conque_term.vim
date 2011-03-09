@@ -235,6 +235,13 @@ function! conque_term#dependency_check() " {{{
         echohl WarningMsg | echomsg "Warning: Conque may not function normally in 'compatible' mode." | echohl None
     endif
 
+    " check for fast mode
+    if g:ConqueTerm_FastMode
+        sil exe s:py . " CONQUE_FAST_MODE = True"
+    else
+        sil exe s:py . " CONQUE_FAST_MODE = False"
+    endif
+
     " if we're all good, load python files
     call conque_term#load_python()
 
@@ -1223,7 +1230,7 @@ function! conque_term#send_selected(type) "{{{
 
     " scroll buffer left
     startinsert!
-    normal 0zH
+    normal! 0zH
 
 endfunction "}}}
 
