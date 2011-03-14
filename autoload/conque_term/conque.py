@@ -1,4 +1,4 @@
-# FILE:     autoload/conque_term/conque.py {{{
+# FILE:     autoload/conque_term/conque.py 
 # AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
 # WEBSITE:  http://conque.googlecode.com
 # MODIFIED: __MODIFIED__
@@ -25,12 +25,12 @@
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE. }}}
+# THE SOFTWARE.
 
 """
 Vim terminal emulator.
 
-The Conque does two things. First, it handles communication between Vim and
+The Conque class does two things. First, it handles communication between Vim and
 the terminal/console subprocess. For example, Vim uses the Conque.write()
 method to send input, and Conque.read() to update the terminal buffer.
 
@@ -45,8 +45,6 @@ import time # DEBUG
 
 
 class Conque:
-
-    # CLASS PROPERTIES {{{
 
     # screen object
     screen = None
@@ -107,15 +105,12 @@ class Conque:
     # used for auto_read actions
     read_count = 0
 
-    # }}}
 
-    # constructor
-    def __init__(self): # {{{
+    def open(self, command, options):
+        """ Start program and initialize this instance """
+
+        # create terminal screen instance
         self.screen = ConqueScreen()
-        # }}}
-
-    # start program and initialize this instance
-    def open(self, command, options): # {{{
 
         # int vars
         self.columns = vim.current.window.width
@@ -140,11 +135,10 @@ class Conque:
 
         # send window size signal, in case LINES/COLUMNS is ignored
         self.update_window_size(True)
-        # }}}
 
-    # write to pty
-    # input is always a unicode string
-    def write(self, input, set_cursor=True, read=True): # {{{
+
+    def write(self, input, set_cursor=True, read=True):
+        """ Write unicode string to program """
 
         # check if window size has changed
         if read:
@@ -157,22 +151,20 @@ class Conque:
         if read:
             self.read(1, set_cursor)
 
-        # }}}
 
-    # write a character to pty
-    # input is ord() value
-    def write_ord(self, input, set_cursor=True, read=True): # {{{
+
+    def write_ord(self, input, set_cursor=True, read=True):
+        """ Write single character to program, using unicode ordinal """
 
         if CONQUE_PYTHON_VERSION == 2:
             self.write(unichr(input), set_cursor, read)
         else:
             self.write(chr(input), set_cursor, read)
         
-        # }}}
 
-    # write a vim expression to pty
-    # input is extracted from expression string
-    def write_expr(self, expr, set_cursor=True, read=True): # {{{
+
+    def write_expr(self, expr, set_cursor=True, read=True):
+        """ Write value of Vim expression to program """
 
         if CONQUE_PYTHON_VERSION == 2:
             try:
@@ -188,11 +180,11 @@ class Conque:
             except:
                 logging.info(traceback.format_exc())
                 pass
-        # }}}
 
-    # convert latin-1 input into utf-8
-    # XXX - this is a hack, to be removed soon
-    def write_latin1(self, input, set_cursor=True, read=True): # {{{ 
+
+    def write_latin1(self, input, set_cursor=True, read=True):
+        """ Write latin-1 string to conque. Very ugly, shood be removed. """
+        # XXX - this whole method is a hack, to be removed soon
 
         if CONQUE_PYTHON_VERSION == 2:
             try:
@@ -203,19 +195,18 @@ class Conque:
         else:
             self.write(input, set_cursor, read)
 
-        # }}}
 
-    # read from pty, and update buffer
-    def read(self, timeout=1, set_cursor=True, return_output=False, update_buffer=True): # {{{
+
+    def read(self, timeout=1, set_cursor=True, return_output=False, update_buffer=True):
+        """ Read from program and update buffer """
+
         output = ''
 
         # this may not actually work
         try:
 
-            # read from subprocess
+            # read from subprocess and strip null characters
             output = self.proc.read(timeout)
-            # and strip null chars
-            output = output.replace(chr(0), '')
 
             if output == '':
                 return
@@ -224,31 +215,30 @@ class Conque:
             if not update_buffer:
                 return output
 
-            logging.debug('read *********************************************************************')
-            #logging.debug(str(output))
-            debug_profile_start = time.time()
+            logging.debug(output)
 
+            # strip null characters. I'm still not sure why they appear
+            output = output.replace(chr(0), '')
+
+            # split input into individual escape sequences, control codes, and text output
             chunks = CONQUE_SEQ_REGEX.split(output)
-            logging.debug('ouput chunking took ' + str((time.time() - debug_profile_start) * 1000) + ' ms')
+
             logging.debug(str(chunks))
 
-            debug_profile_start = time.time()
-
-            # don't go through all the csi regex if length is one (no matches)
+            # if there were no escape sequences, skip processing and treat entire string as plain text
             if len(chunks) == 1:
-                logging.debug('short circuit')
                 self.plain_text(chunks[0])
 
+            # loop through and process escape sequences
             else:
                 for s in chunks:
                     if s == '':
                         continue
 
                     #logging.debug(str(s) + '--------------------------------------------------------------')
-                    logging.debug('chgs ' + str(self.color_changes))
                     logging.debug('at line ' + str(self.l) + ' column ' + str(self.c))
 
-                    # Check for control character match {{{
+                    # Check for control character match 
                     if CONQUE_SEQ_REGEX_CTL.match(s[0]):
                         logging.debug('control match')
                         nr = ord(s[0])
@@ -257,9 +247,8 @@ class Conque:
                         else:
                             logging.info('escape not found for ' + str(s))
                             pass
-                        # }}}
 
-                    # check for escape sequence match {{{
+                    # check for escape sequence match 
                     elif CONQUE_SEQ_REGEX_CSI.match(s):
                         logging.debug('csi match')
                         if s[-1] in CONQUE_ESCAPE:
@@ -269,15 +258,13 @@ class Conque:
                         else:
                             logging.info('escape not found for ' + str(s))
                             pass
-                        # }}}
 
-                    # check for title match {{{
+                    # check for title match 
                     elif CONQUE_SEQ_REGEX_TITLE.match(s):
                         logging.debug('title match')
                         self.change_title(s[2], s[4:-1])
-                        # }}}
 
-                    # check for hash match {{{
+                    # check for hash match 
                     elif CONQUE_SEQ_REGEX_HASH.match(s):
                         logging.debug('hash match')
                         if s[-1] in CONQUE_ESCAPE_HASH:
@@ -285,9 +272,8 @@ class Conque:
                         else:
                             logging.info('escape not found for ' + str(s))
                             pass
-                        # }}}
 
-                    # check for charset match {{{
+                    # check for charset match 
                     elif CONQUE_SEQ_REGEX_CHAR.match(s):
                         logging.debug('char match')
                         if s[-1] in CONQUE_ESCAPE_CHARSET:
@@ -295,9 +281,8 @@ class Conque:
                         else:
                             logging.info('escape not found for ' + str(s))
                             pass
-                        # }}}
 
-                    # check for other escape match {{{
+                    # check for other escape match 
                     elif CONQUE_SEQ_REGEX_ESC.match(s):
                         logging.debug('escape match')
                         if s[-1] in CONQUE_ESCAPE_PLAIN:
@@ -305,23 +290,21 @@ class Conque:
                         else:
                             logging.info('escape not found for ' + str(s))
                             pass
-                        # }}}
 
-                    # else process plain text {{{
+                    # else process plain text 
                     else:
                         self.plain_text(s)
-                        # }}}
 
-            # check window size
+            # set cusor position
             if set_cursor:
                 self.screen.set_cursor(self.l, self.c)
 
             # we need to set the cursor position
             self.cursor_set = False
 
-            vim.command('redraw')
-
-            logging.info('::: read took ' + str((time.time() - debug_profile_start) * 1000) + ' ms')
+            # redraw screen for immediate feedback
+            if not CONQUE_FAST_MODE:
+                vim.command('redraw')
 
         except:
             logging.info('read error')
@@ -333,13 +316,13 @@ class Conque:
                 return output
             else:
                 return output.encode(CONQUE_VIM_ENCODING, 'replace')
-        # }}}
 
-    # for polling
-    def auto_read(self): # {{{
+
+    def auto_read(self):
+        """ Poll program for more output. Called many times a second, so it should be fast. """
 
         # check subprocess status, but not every time since it's CPU expensive
-        if self.read_count % 16 == 0:
+        if self.read_count % 32 == 0:
             if not self.proc.is_alive():
                 vim.command('call conque_term#get_instance().close()')
                 return
@@ -376,17 +359,18 @@ class Conque:
             pass
         self.cursor_set = True
 
-    # }}}
+
 
     ###############################################################################################
-    # Plain text and color codes # {{{
+    # Plain text and color codes
 
-    def plain_text(self, input): # {{{
+    def plain_text(self, input):
+        """ Write text output to screen """
 
-        # translate input into correct character set
+        # translate input into graphics character set if needed
         if self.character_set == 'graphics':
             old_input = input
-            input = ''
+            input = u('')
             for i in range(0, len(old_input)):
                 chrd = ord(old_input[i])
                 logging.debug('pre-translation: ' + old_input[i])
@@ -396,27 +380,33 @@ class Conque:
                         logging.info("over the line!!!11")
                         input = input + old_input[i]
                     else:
-                        input = input + unichr(CONQUE_GRAPHICS_SET[chrd])
+                        input = input + uchr(CONQUE_GRAPHICS_SET[chrd])
                 except:
                     logging.info('failed')
                     pass
 
         logging.debug('plain -- ' + str(self.color_changes))
+
+        # get current line from Vim buffer
         current_line = self.screen[self.l]
 
-        if len(current_line) < self.working_columns:
+        # pad current line with spaces, if it's shorter than cursor position
+        if len(current_line) < self.c:
             current_line = current_line + ' ' * (self.c - len(current_line))
 
         # if line is wider than screen
         if self.c + len(input) - 1 > self.working_columns:
+
             # Table formatting hack
             if self.unwrap_tables and CONQUE_TABLE_OUTPUT.match(input):
                 self.screen[self.l] = current_line[:self.c - 1] + input + current_line[self.c + len(input) - 1:]
                 self.apply_color(self.c, self.c + len(input))
                 self.c += len(input)
                 return
+
             logging.debug('autowrap triggered')
             diff = self.c + len(input) - self.working_columns - 1
+
             # if autowrap is enabled
             if self.autowrap:
                 self.screen[self.l] = current_line[:self.c - 1] + input[:-1 * diff]
@@ -437,9 +427,11 @@ class Conque:
             self.apply_color(self.c, self.c + len(input))
             self.c += len(input)
 
-    # }}}
 
-    def apply_color(self, start, end, line=0): # {{{
+
+    def apply_color(self, start, end, line=0):
+        """ Apply terminal colors to screen for a single line """
+        
         logging.debug('applying colors ' + str(self.color_changes))
 
         # stop here if coloration is disabled
@@ -476,6 +468,7 @@ class Conque:
                         logging.debug('second.half')
                         self.exec_highlight(buffer_line, syn['start'], start, syn['highlight'])
 
+        # remove overlapped colors
         if len(to_del) > 0:
             to_del.reverse()
             for di in to_del:
@@ -485,6 +478,7 @@ class Conque:
         if len(self.color_changes) == 0:
             return
 
+        # build the color attribute string
         highlight = ''
         for attr in self.color_changes.keys():
             highlight = highlight + ' ' + attr + '=' + self.color_changes[attr]
@@ -492,9 +486,8 @@ class Conque:
         # execute the highlight
         self.exec_highlight(buffer_line, start, end, highlight)
 
-    # }}}
 
-    def exec_highlight(self, buffer_line, start, end, highlight): # {{{
+    def exec_highlight(self, buffer_line, start, end, highlight):
 
         syntax_name = 'ConqueHighLightAt_%d_%d_%d_%d' % (self.proc.pid, self.l, start, len(self.color_history) + 1)
         syntax_options = 'contains=ALLBUT,ConqueString,MySQLString,MySQLKeyword oneline'
@@ -520,9 +513,9 @@ class Conque:
             self.color_history[buffer_line] = []
 
         self.color_history[buffer_line].append({'name': syntax_name, 'start': start, 'end': end, 'highlight': highlight})
-    # }}}
 
-    def prune_colors(self): # {{{
+
+    def prune_colors(self):
         """ remove syntax highlighting older than CONQUE_MAX_SYNTAX_LINES up the screen"""
         logging.debug('pruning colors ' + str(len(self.color_history.keys())))
 
@@ -533,12 +526,12 @@ class Conque:
                 for syn in self.color_history[line]:
                     vim.command('syn clear ' + syn['name'])
                 del self.color_history[line]
-    # }}}
 
-    # }}}
+
+
 
     ###############################################################################################
-    # Control functions {{{
+    # Control functions 
 
     def ctl_nl(self):
         # if we're in a scrolling region, scroll instead of moving cursor down
@@ -590,12 +583,12 @@ class Conque:
     def ctl_si(self):
         self.character_set = 'ascii'
 
-    # }}}
+
 
     ###############################################################################################
-    # CSI functions {{{
+    # CSI functions 
 
-    def csi_font(self, csi): # {{{
+    def csi_font(self, csi):
         if not self.enable_colors:
             return
 
@@ -634,9 +627,9 @@ class Conque:
                                 self.color_changes[attr] += ',' + CONQUE_FONT[val]['attributes'][attr]
                             else:
                                 self.color_changes[attr] = CONQUE_FONT[val]['attributes'][attr]
-        # }}}
 
-    def csi_clear_line(self, csi): # {{{
+
+    def csi_clear_line(self, csi):
         logging.debug(str(csi))
 
         # this escape defaults to 0
@@ -667,9 +660,9 @@ class Conque:
 
         logging.debug(str(self.color_changes))
         logging.debug('new line: ' + self.screen[self.l])
-        # }}}
 
-    def csi_cursor_right(self, csi): # {{{
+
+    def csi_cursor_right(self, csi):
         # we use 1 even if escape explicitly specifies 0
         if csi['val'] == 0:
             csi['val'] = 1
@@ -683,9 +676,9 @@ class Conque:
             return
 
         self.c = self.bound(self.c + csi['val'], 1, self.working_columns)
-        # }}}
 
-    def csi_cursor_left(self, csi): # {{{
+
+    def csi_cursor_left(self, csi):
         # we use 1 even if escape explicitly specifies 0
         if csi['val'] == 0:
             csi['val'] = 1
@@ -696,25 +689,25 @@ class Conque:
             return
 
         self.c = self.bound(self.c - csi['val'], 1, self.working_columns)
-        # }}}
 
-    def csi_cursor_to_column(self, csi): # {{{
+
+    def csi_cursor_to_column(self, csi):
         self.c = self.bound(csi['val'], 1, self.working_columns)
-        # }}}
 
-    def csi_cursor_up(self, csi): # {{{
+
+    def csi_cursor_up(self, csi):
         self.l = self.bound(self.l - csi['val'], self.top, self.bottom)
 
         self.color_changes = {}
-        # }}}
 
-    def csi_cursor_down(self, csi): # {{{
+
+    def csi_cursor_down(self, csi):
         self.l = self.bound(self.l + csi['val'], self.top, self.bottom)
 
         self.color_changes = {}
-        # }}}
 
-    def csi_clear_screen(self, csi): # {{{
+
+    def csi_clear_screen(self, csi):
         # default to 0
         if len(csi['vals']) == 0:
             csi['val'] = 0
@@ -750,17 +743,17 @@ class Conque:
                         vim.command('syn clear ' + syn['name'])
 
         self.color_changes = {}
-        # }}}
 
-    def csi_delete_chars(self, csi): # {{{
+
+    def csi_delete_chars(self, csi):
         self.screen[self.l] = self.screen[self.l][:self.c] + self.screen[self.l][self.c + csi['val']:]
-        # }}}
 
-    def csi_add_spaces(self, csi): # {{{
+
+    def csi_add_spaces(self, csi):
         self.screen[self.l] = self.screen[self.l][: self.c - 1] + ' ' * csi['val'] + self.screen[self.l][self.c:]
-        # }}}
 
-    def csi_cursor(self, csi): # {{{
+
+    def csi_cursor(self, csi):
         if len(csi['vals']) == 2:
             new_line = csi['vals'][0]
             new_col = csi['vals'][1]
@@ -777,9 +770,9 @@ class Conque:
         if self.c > len(self.screen[self.l]):
             self.screen[self.l] = self.screen[self.l] + ' ' * (self.c - len(self.screen[self.l]))
 
-        # }}}
 
-    def csi_set_coords(self, csi): # {{{
+
+    def csi_set_coords(self, csi):
         if len(csi['vals']) == 2:
             new_start = csi['vals'][0]
             new_end = csi['vals'][1]
@@ -798,9 +791,9 @@ class Conque:
             self.l = self.bottom
 
         self.color_changes = {}
-        # }}}
 
-    def csi_tab_clear(self, csi): # {{{
+
+    def csi_tab_clear(self, csi):
         # this escape defaults to 0
         if len(csi['vals']) == 0:
             csi['val'] = 0
@@ -812,9 +805,9 @@ class Conque:
         elif csi['val'] == 3:
             for i in range(0, self.columns + 1):
                 self.tabstops[i] = False
-        # }}}
 
-    def csi_set(self, csi): # {{{
+
+    def csi_set(self, csi):
         # 132 cols
         if csi['val'] == 3:
             self.csi_clear_screen(self.parse_csi('2J'))
@@ -830,9 +823,9 @@ class Conque:
 
 
         self.color_changes = {}
-        # }}}
 
-    def csi_reset(self, csi): # {{{
+
+    def csi_reset(self, csi):
         # 80 cols
         if csi['val'] == 3:
             self.csi_clear_screen(self.parse_csi('2J'))
@@ -848,31 +841,31 @@ class Conque:
 
 
         self.color_changes = {}
-        # }}}
 
-    # }}}
+
+
 
     ###############################################################################################
-    # ESC functions {{{
+    # ESC functions 
 
-    def esc_scroll_up(self): # {{{
+    def esc_scroll_up(self):
         self.ctl_nl()
 
         self.color_changes = {}
-        # }}}
 
-    def esc_next_line(self): # {{{
+
+    def esc_next_line(self):
         self.ctl_nl()
         self.c = 1
-        # }}}
 
-    def esc_set_tab(self): # {{{
+
+    def esc_set_tab(self):
         logging.debug('set tab at ' + str(self.c))
         if self.c <= len(self.tabstops):
             self.tabstops[self.c - 1] = True
-        # }}}
 
-    def esc_scroll_down(self): # {{{
+
+    def esc_scroll_down(self):
         if self.l == self.top:
             del self.screen[self.bottom]
             self.screen.insert(self.top, '')
@@ -880,24 +873,24 @@ class Conque:
             self.l += -1
 
         self.color_changes = {}
-        # }}}
 
-    # }}}
+
+
 
     ###############################################################################################
-    # HASH functions {{{
+    # HASH functions 
 
-    def hash_screen_alignment_test(self): # {{{
+    def hash_screen_alignment_test(self):
         self.csi_clear_screen(self.parse_csi('2J'))
         self.working_lines = self.lines
         for l in range(1, self.lines + 1):
             self.screen[l] = 'E' * self.working_columns
-        # }}}
 
-    # }}}
+
+
 
     ###############################################################################################
-    # CHARSET functions {{{
+    # CHARSET functions 
 
     def charset_us(self):
         self.character_set = 'ascii'
@@ -908,10 +901,10 @@ class Conque:
     def charset_graphics(self):
         self.character_set = 'graphics'
 
-    # }}}
+
 
     ###############################################################################################
-    # Random stuff {{{
+    # Random stuff 
 
     def set_cursor(self, line, col):
         self.screen.set_cursor(line, col)
@@ -976,12 +969,12 @@ class Conque:
     def abort(self):
         self.proc.signal(1)
 
-    # }}}
+
 
     ###############################################################################################
-    # Utility {{{
+    # Utility 
 
-    def parse_csi(self, s): # {{{
+    def parse_csi(self, s):
         attr = {'key': s[-1], 'flag': '', 'val': 1, 'vals': []}
 
         if len(s) == 1:
@@ -1006,9 +999,9 @@ class Conque:
             attr['val'] = int(attr['vals'][0])
 
         return attr
-        # }}}
 
-    def bound(self, val, min, max): # {{{
+
+    def bound(self, val, min, max):
         if val > max:
             return max
 
@@ -1016,9 +1009,9 @@ class Conque:
             return min
 
         return val
-        # }}}
 
-    def xterm_to_rgb(self, color_code): # {{{
+
+    def xterm_to_rgb(self, color_code):
         if color_code < 16:
             ascii_colors = ['000000', 'CD0000', '00CD00', 'CDCD00', '0000EE', 'CD00CD', '00CDCD', 'E5E5E5',
                    '7F7F7F', 'FF0000', '00FF00', 'FFFF00', '5C5CFF', 'FF00FF', '00FFFF', 'FFFFFF']
@@ -1035,12 +1028,12 @@ class Conque:
         else:
             grey_tone = "%02x" % math.floor((255 / 24) * (color_code - 232))
             return grey_tone + grey_tone + grey_tone
-        # }}}
 
-    # }}}
 
-    def get_buffer_line(self, line): # {{{
+
+
+    def get_buffer_line(self, line):
         return self.screen.get_buffer_line(line)
-    # }}}
+
 
 # vim:foldmethod=marker
