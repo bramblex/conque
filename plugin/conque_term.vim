@@ -45,7 +45,7 @@ endif
 "   * Disables terminal colors
 "   * Disables some multi-byte character handling
 if !exists('g:ConqueTerm_FastMode')
-    let g:ConqueTerm_FastMode = 1
+    let g:ConqueTerm_FastMode = 0
 endif " }}}
 
 " automatically go into insert mode when entering buffer {{{

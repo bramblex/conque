@@ -303,8 +303,8 @@ class Conque:
             self.cursor_set = False
 
             # redraw screen for immediate feedback
-            if not CONQUE_FAST_MODE:
-                vim.command('redraw')
+            #if not CONQUE_FAST_MODE:
+            #    vim.command('redraw')
 
         except:
             logging.info('read error')
