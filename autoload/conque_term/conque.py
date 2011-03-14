@@ -169,14 +169,14 @@ class Conque:
         if CONQUE_PYTHON_VERSION == 2:
             try:
                 val = vim.eval(expr)
-                self.write(unicode(val, CONQUE_VIM_ENCODING, 'ignore'))
+                self.write(unicode(val, CONQUE_VIM_ENCODING, 'ignore'), set_cursor, read)
             except:
                 logging.info(traceback.format_exc())
                 pass
         else:
             try:
                 # XXX - Depending on Vim to deal with encoding, sadly
-                self.write(vim.eval(expr))
+                self.write(vim.eval(expr), set_cursor, read)
             except:
                 logging.info(traceback.format_exc())
                 pass
@@ -517,7 +517,7 @@ class Conque:
 
     def prune_colors(self):
         """ remove syntax highlighting older than CONQUE_MAX_SYNTAX_LINES up the screen"""
-        logging.debug('pruning colors ' + str(len(self.color_history.keys())))
+        logging.info('pruning colors ' + str(len(self.color_history.keys())))
 
         buffer_line = self.get_buffer_line(self.l)
 
