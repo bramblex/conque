@@ -1,11 +1,11 @@
 # FILE:     autoload/conque_term/conque_screen.py
 # AUTHOR:   Nico Raffo <nicoraffo@gmail.com>
 # WEBSITE:  http://conque.googlecode.com
-# MODIFIED: __MODIFIED__
-# VERSION:  __VERSION__, for Vim 7.0
+# MODIFIED: 2011-09-02
+# VERSION:  2.3, for Vim 7.0
 # LICENSE:
 # Conque - Vim terminal/console emulator
-# Copyright (C) 2009-__YEAR__ Nico Raffo
+# Copyright (C) 2009-2011 Nico Raffo
 #
 # MIT License
 #
@@ -137,7 +137,7 @@ class ConqueScreen(object):
 
     def insert(self, line, value):
         """ Define value insertion for ConqueScreen objects. """
-        logging.debug('insert at line ' + str(self.screen_top + line - 2))
+
         l = self.screen_top + line - 2
         try:
             self.buffer.append(value, l)
@@ -204,9 +204,9 @@ class ConqueScreen(object):
     def reset_size(self, line):
         """ Change screen size """
 
-        logging.debug('buffer len is ' + str(len(self.buffer)))
-        logging.debug('buffer height ' + str(vim.current.window.height))
-        logging.debug('old screen top was ' + str(self.screen_top))
+
+
+
 
         # save cursor line number
         buffer_line = self.screen_top + line
@@ -217,7 +217,7 @@ class ConqueScreen(object):
         self.screen_top = len(self.buffer) - vim.current.window.height + 1
         if self.screen_top < 1:
             self.screen_top = 1
-        logging.debug('new screen top is  ' + str(self.screen_top))
+
 
         # align bottom of buffer to bottom of screen
         vim.command('normal! ' + str(self.screen_height) + 'kG')
