@@ -1,0 +1,1 @@
+All documentation has moved to the [Usage](Usage.md) page.
